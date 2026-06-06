@@ -10,6 +10,7 @@ import type {
   Category,
   ChatSession,
   DashboardSummary,
+  ForecastPayload,
   InsightPayload,
   Integration,
   SetupStatus,
@@ -66,6 +67,10 @@ export function deleteWorkspace(id: number) {
 
 export function getSetupStatus() {
   return fetchJSON<SetupStatus>("/api/setup/status");
+}
+
+export function completeSetup() {
+  return fetchJSON<{ success: boolean }>("/api/setup/complete", { method: "POST" });
 }
 
 export function saveBankCredentials(
@@ -333,6 +338,47 @@ export function updateAccount(
 
 export function getInsights() {
   return fetchJSON<InsightPayload>(`/api/insights`);
+}
+
+export function getForecast() {
+  return fetchJSON<ForecastPayload>(`/api/forecast`);
+}
+
+export interface ImportResult {
+  added: number;
+  updated: number;
+  accountName: string;
+}
+
+export interface ImportRowInput {
+  date: string;
+  description: string;
+  /** Signed: negative = expense, positive = income. */
+  amount: number;
+  currency?: string;
+  memo?: string | null;
+}
+
+export function importCsvRows(accountName: string, rows: ImportRowInput[]) {
+  return fetchJSON<ImportResult>("/api/import/csv", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ accountName, rows }),
+  });
+}
+
+export function createManualTransaction(input: {
+  date: string;
+  description: string;
+  amount: number;
+  accountName?: string;
+  currency?: string;
+}) {
+  return fetchJSON<ImportResult>("/api/transactions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
 }
 
 export function getActivity() {

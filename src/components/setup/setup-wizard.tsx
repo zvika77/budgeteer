@@ -5,45 +5,46 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
-import { AIStep } from "@/components/setup/ai-step";
-import { BankStep } from "@/components/setup/bank-step";
-import { BudgetsStep } from "@/components/setup/budgets-step";
+import { AddMoneyStep } from "@/components/setup/add-money-step";
+import { BalanceStep } from "@/components/setup/balance-step";
 import { CompleteStep } from "@/components/setup/complete-step";
-import { MonthlyTargetStep } from "@/components/setup/monthly-target-step";
+import { WelcomeStep } from "@/components/setup/welcome-step";
 import { WorkspaceNameStep } from "@/components/setup/workspace-name-step";
 import { useRouter } from "@/i18n/navigation";
-import { createWorkspace } from "@/lib/api";
+import { completeSetup, createWorkspace } from "@/lib/api";
 import { GITHUB_REPO_URL } from "@/lib/constants";
 import { setActiveWorkspaceId } from "@/lib/workspace-store";
 
 export type SetupMode = "first-run" | "new-workspace";
 
-type WizardStep = 0 | 1 | 2 | 3 | 4 | 5;
+type Step = "name" | "welcome" | "money" | "balance" | "done";
 
-const FIRST_RUN_STEPS = [
-  { n: 1 as const, labelKey: "stepConnect" },
-  { n: 2 as const, labelKey: "stepAi" },
-  { n: 5 as const, labelKey: "stepTarget" },
-  { n: 3 as const, labelKey: "stepBudgets" },
-  { n: 4 as const, labelKey: "stepDone" },
+interface StepDef {
+  key: Step;
+  labelKey: string;
+}
+
+const FIRST_RUN_STEPS: StepDef[] = [
+  { key: "welcome", labelKey: "stepWelcome" },
+  { key: "money", labelKey: "stepAddMoney" },
+  { key: "balance", labelKey: "stepBalance" },
+  { key: "done", labelKey: "stepDone" },
 ];
 
-const NEW_WORKSPACE_STEPS = [
-  { n: 0 as const, labelKey: "stepName" },
-  { n: 1 as const, labelKey: "stepConnect" },
-  { n: 5 as const, labelKey: "stepTarget" },
-  { n: 3 as const, labelKey: "stepBudgets" },
-  { n: 4 as const, labelKey: "stepDone" },
+const NEW_WORKSPACE_STEPS: StepDef[] = [
+  { key: "name", labelKey: "stepName" },
+  { key: "money", labelKey: "stepAddMoney" },
+  { key: "balance", labelKey: "stepBalance" },
+  { key: "done", labelKey: "stepDone" },
 ];
 
 export function SetupWizard({ mode = "first-run" }: { mode?: SetupMode }) {
   const t = useTranslations("setup");
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [step, setStep] = useState<WizardStep>(mode === "new-workspace" ? 0 : 1);
-  const [creating, setCreating] = useState(false);
-
   const steps = mode === "new-workspace" ? NEW_WORKSPACE_STEPS : FIRST_RUN_STEPS;
+  const [step, setStep] = useState<Step>(mode === "new-workspace" ? "name" : "welcome");
+  const [creating, setCreating] = useState(false);
 
   async function handleNameSubmit(name: string) {
     setCreating(true);
@@ -51,7 +52,7 @@ export function SetupWizard({ mode = "first-run" }: { mode?: SetupMode }) {
       const ws = await createWorkspace(name);
       setActiveWorkspaceId(ws.id);
       queryClient.invalidateQueries();
-      setStep(1);
+      setStep("money");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("workspaceCreateFailed"));
     } finally {
@@ -59,10 +60,17 @@ export function SetupWizard({ mode = "first-run" }: { mode?: SetupMode }) {
     }
   }
 
-  function handleFinish() {
+  async function handleFinish() {
+    try {
+      await completeSetup();
+    } catch {
+      // The onboarded flag is best-effort; imported data also unlocks the app.
+    }
     queryClient.invalidateQueries();
-    router.push("/?sync=1");
+    router.push("/");
   }
+
+  const firstStep: Step = mode === "new-workspace" ? "name" : "welcome";
 
   return (
     <div className="relative min-h-screen bg-background">
@@ -88,21 +96,20 @@ export function SetupWizard({ mode = "first-run" }: { mode?: SetupMode }) {
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.28, ease: [0.2, 0.7, 0.3, 1] }}
           >
-            {step === 0 && (
+            {step === "name" && (
               <WorkspaceNameStep onComplete={handleNameSubmit} submitting={creating} />
             )}
-            {step === 1 && (
-              <BankStep onComplete={() => setStep(mode === "new-workspace" ? 5 : 2)} />
-            )}
-            {step === 2 && <AIStep onComplete={() => setStep(5)} onBack={() => setStep(1)} />}
-            {step === 5 && (
-              <MonthlyTargetStep
-                onComplete={() => setStep(3)}
-                onBack={() => setStep(mode === "new-workspace" ? 1 : 2)}
+            {step === "welcome" && <WelcomeStep onComplete={() => setStep("money")} />}
+            {step === "money" && (
+              <AddMoneyStep
+                onComplete={() => setStep("balance")}
+                onBack={() => setStep(firstStep)}
               />
             )}
-            {step === 3 && <BudgetsStep onComplete={() => setStep(4)} onBack={() => setStep(5)} />}
-            {step === 4 && <CompleteStep onFinish={handleFinish} />}
+            {step === "balance" && (
+              <BalanceStep onComplete={() => setStep("done")} onBack={() => setStep("money")} />
+            )}
+            {step === "done" && <CompleteStep onFinish={handleFinish} />}
           </motion.div>
         </AnimatePresence>
       </main>
@@ -127,26 +134,19 @@ function BrandMark() {
   );
 }
 
-interface StepDef {
-  n: WizardStep;
-  labelKey: string;
-}
-
-function DotStepper({ step, steps }: { step: WizardStep; steps: ReadonlyArray<StepDef> }) {
+function DotStepper({ step, steps }: { step: Step; steps: ReadonlyArray<StepDef> }) {
   const t = useTranslations("setup");
-  const currentIdx = steps.findIndex((s) => s.n === step);
+  const currentIdx = steps.findIndex((s) => s.key === step);
   return (
     <div className="flex items-center gap-2">
       {steps.map((s, i) => {
         const state = i < currentIdx ? "done" : i === currentIdx ? "active" : "todo";
         return (
-          <div key={s.n} className="flex items-center gap-2">
+          <div key={s.key} className="flex items-center gap-2">
             <DotLabel label={t(s.labelKey)} state={state} />
             {i < steps.length - 1 && (
               <motion.div
-                animate={{
-                  background: i < currentIdx ? "var(--primary)" : "var(--border)",
-                }}
+                animate={{ background: i < currentIdx ? "var(--primary)" : "var(--border)" }}
                 transition={{ duration: 0.35 }}
                 className="h-px w-3.5 rounded-full"
               />

@@ -4,9 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeftRight,
   LayoutDashboard,
+  Lightbulb,
   Settings as SettingsIcon,
   Sparkles,
   Star,
+  Upload,
   Wallet,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -43,16 +45,28 @@ const NAV: NavDef[] = [
     match: (p: string) => p === "/",
   },
   {
-    href: "/budget",
-    labelKey: "budget",
-    Icon: Wallet,
-    match: (p: string) => p.startsWith("/budget"),
+    href: "/insights",
+    labelKey: "insights",
+    Icon: Lightbulb,
+    match: (p: string) => p.startsWith("/insights"),
   },
   {
     href: "/transactions",
     labelKey: "transactions",
     Icon: ArrowLeftRight,
     match: (p: string) => p.startsWith("/transactions"),
+  },
+  {
+    href: "/budget",
+    labelKey: "budget",
+    Icon: Wallet,
+    match: (p: string) => p.startsWith("/budget"),
+  },
+  {
+    href: "/import",
+    labelKey: "import",
+    Icon: Upload,
+    match: (p: string) => p.startsWith("/import"),
   },
   {
     href: "/chat",

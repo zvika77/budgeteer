@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { SetupWizard } from "@/components/setup/setup-wizard";
-import { anyWorkspaceHasBankCredentials } from "@/server/db/queries/bank-credentials";
+import { isAppOnboarded } from "@/server/lib/app-state";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +14,7 @@ export default async function SetupPage({ params, searchParams }: SetupPageProps
 
   const newWorkspaceMode = mode === "new-workspace";
 
-  if (!newWorkspaceMode && force !== "1" && anyWorkspaceHasBankCredentials()) {
+  if (!newWorkspaceMode && force !== "1" && isAppOnboarded()) {
     const { locale } = await params;
     redirect(`/${locale}`);
   }

@@ -9,7 +9,7 @@ import { syncRuns } from "../schema";
 export function createSyncRun(
   workspaceId: number,
   provider: string,
-  credentialId: number,
+  credentialId: number | null,
   scrapeFromDate: string,
 ): number {
   const result = getOrm()

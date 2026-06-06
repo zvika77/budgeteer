@@ -138,6 +138,100 @@ export function insertTransactions(
   return { added, updated };
 }
 
+/**
+ * A locally-imported transaction (CSV upload or manual entry). Unlike the bank
+ * scraper path, these carry no credential and an explicit signed amount:
+ * negative = expense (money out), positive = income (money in). Kind is derived
+ * from the sign, never from `detectKind`, because the user told us directly.
+ */
+export interface ImportedTransactionInput {
+  accountNumber: string;
+  date: string;
+  description: string;
+  amount: number;
+  currency: string;
+  memo?: string | null;
+}
+
+/**
+ * Insert locally-imported rows, reusing the same dedup fingerprint as the
+ * scraper (so re-uploading the same file is idempotent) but with a null
+ * credential and a sign-derived kind. `provider` is "csv" or "manual".
+ */
+export function insertImportedTransactions(
+  workspaceId: number,
+  rows: ImportedTransactionInput[],
+  provider: string,
+  syncRunId: number,
+): InsertResult {
+  const db = getDb();
+  let added = 0;
+  let updated = 0;
+  const hashCounts = new Map<string, number>();
+
+  const existingCountStmt = db.prepare(
+    "SELECT COUNT(*) as count FROM transactions WHERE workspace_id = ? AND dedup_hash = ?",
+  );
+
+  const insertStmt = db.prepare(`
+    INSERT INTO transactions (
+      workspace_id, account_number, date, processed_date, original_amount, original_currency,
+      charged_amount, charged_currency, description, memo, type, status,
+      identifier, provider, credential_id, sync_run_id, dedup_hash, dedup_sequence, kind
+    ) VALUES (
+      @workspaceId, @accountNumber, @date, @date, @amount, @currency,
+      @amount, @currency, @description, @memo, 'normal', 'completed',
+      NULL, @provider, NULL, @syncRunId, @dedupHash, @dedupSequence, @kind
+    )
+    ON CONFLICT(workspace_id, dedup_hash, dedup_sequence) DO NOTHING
+  `);
+
+  const batchInsert = db.transaction(() => {
+    for (const row of rows) {
+      const hash = computeDedupHash({
+        accountNumber: row.accountNumber,
+        date: row.date,
+        originalAmount: row.amount,
+        originalCurrency: row.currency,
+        description: row.description,
+      });
+      const batchCount = (hashCounts.get(hash) ?? 0) + 1;
+      hashCounts.set(hash, batchCount);
+      const { count: existingCount } = existingCountStmt.get(workspaceId, hash) as {
+        count: number;
+      };
+      if (batchCount <= existingCount) {
+        updated++;
+        continue;
+      }
+      insertStmt.run({
+        workspaceId,
+        accountNumber: row.accountNumber,
+        date: row.date,
+        amount: row.amount,
+        currency: row.currency,
+        description: row.description,
+        memo: row.memo ?? null,
+        provider,
+        syncRunId,
+        dedupHash: hash,
+        dedupSequence: batchCount - 1,
+        kind: row.amount >= 0 ? "income" : "expense",
+      });
+      added++;
+    }
+  });
+
+  batchInsert();
+  return { added, updated };
+}
+
+/** True when any workspace has at least one transaction (bank or imported). */
+export function anyWorkspaceHasTransactions(): boolean {
+  const row = getDb().prepare("SELECT 1 FROM transactions LIMIT 1").get();
+  return row != null;
+}
+
 interface QueryParams {
   from?: string;
   to?: string;
@@ -522,6 +616,38 @@ export function getCategoryMonthlySpend(
        ORDER BY month ASC`,
     )
     .all(workspaceId, monthsBack) as CategoryMonthSpend[];
+}
+
+export interface MerchantMonthSpend {
+  month: string;
+  merchant: string;
+  categoryId: number | null;
+  amount: number;
+}
+
+// Per-(month, merchant) expense totals over a trailing window. Feeds recurring-
+// charge detection (a merchant billing most months is a fixed commitment).
+export function getMerchantMonthlySpend(
+  workspaceId: number,
+  monthsBack: number,
+): MerchantMonthSpend[] {
+  return getDb()
+    .prepare(
+      `SELECT strftime('%Y-%m', date) as month,
+              description as merchant,
+              category_id as categoryId,
+              SUM(ABS(charged_amount)) as amount
+       FROM transactions
+       WHERE workspace_id = ?
+         AND date >= date('now', 'start of month', '-' || ? || ' months')
+         AND status = 'completed'
+         AND kind = 'expense'
+         AND is_excluded = 0
+         AND description != ''
+       GROUP BY month, description
+       ORDER BY month ASC`,
+    )
+    .all(workspaceId, monthsBack) as MerchantMonthSpend[];
 }
 
 export function getTopMerchants(

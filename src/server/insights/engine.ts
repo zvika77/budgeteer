@@ -172,15 +172,12 @@ export function buildInsightPayload(workspaceId: number, now: Date): InsightPayl
   );
 
   const insights = safe("insights", errors, () =>
-    verdict
-      ? buildInsights({
-          verdict,
-          movers: movers ?? [],
-          current: currentRolled,
-          typicalByKey,
-          metaById,
-        })
-      : [],
+    buildInsights({
+      movers: movers ?? [],
+      current: currentRolled,
+      typicalByKey,
+      metaById,
+    }),
   );
 
   const burndown = safe("burndown", errors, () => {

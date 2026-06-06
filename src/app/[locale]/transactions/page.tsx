@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/layout/app-shell";
 import { TransactionsPage } from "@/components/transactions/transactions-page";
-import { anyWorkspaceHasBankCredentials } from "@/server/db/queries/bank-credentials";
+import { isAppOnboarded } from "@/server/lib/app-state";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +13,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Transactions({ params }: { params: Promise<{ locale: string }> }) {
-  if (!anyWorkspaceHasBankCredentials()) {
+  if (!isAppOnboarded()) {
     const { locale } = await params;
     redirect(`/${locale}/setup`);
   }
