@@ -48,7 +48,7 @@ And it's forward-looking like [RiseUp](https://www.riseup.co.il/): Budgeteer for
 <td width="33%" valign="top">
 
 ### 📈 Cash-flow forecast
-The "bottom line" front and center: will you finish the month in the plus or the minus, your projected income vs spending, expected month-end balance, and an overdraft warning. Fixed commitments like rent are counted once, not extrapolated.
+The "bottom line" front and center: will you finish the month in the plus or the minus, your projected income vs spending, expected month-end balance, and an overdraft warning. Fixed commitments like rent are counted once, not extrapolated. A Trends chart below it shows income vs expense vs net side by side for the last several months, so you can spot patterns at a glance.
 
 </td>
 <td width="33%" valign="top">
