@@ -1152,5 +1152,26 @@
     "focusDoneTitle": "כל הכבוד",
     "focusDoneBody": "עברתם על כל התנועות שסומנו.",
     "focusBack": "חזרה לבדיקה"
+  },
+  "anomalies": {
+    "title": "שווה בדיקה",
+    "subtitle": "{count} לבדיקה החודש",
+    "emptyTitle": "הכל נראה תקין",
+    "emptyBody": "לא נמצאו חיובים כפולים, חיובים במטבע זר או חריגים החודש.",
+    "reviewCta": "בדיקה",
+    "anom_duplicate-charge_title": "ייתכן חיוב כפול ב{merchant}",
+    "anom_duplicate-charge_body": "שני חיובים של {amount} בתוך כמה ימים. כדאי לוודא שזו לא טעות.",
+    "anom_foreign-charge_title": "חיוב חדש במטבע זר ב{merchant}",
+    "anom_foreign-charge_body": "{amount} מבית עסק שלא חויבת בו קודם.",
+    "anom_merchant-outlier_title": "{merchant} גבוה מהרגיל",
+    "anom_merchant-outlier_body": "{amount} הפעם לעומת {amount2} הרגילים.",
+    "anom_price-creep_title": "המחיר של {merchant} עלה",
+    "anom_price-creep_body": "כעת {amount} לחודש, עלייה מ-{amount2} ({percent}% יותר).",
+    "anom_new-subscription_title": "מנוי חדש: {merchant}",
+    "anom_new-subscription_body": "נראה כמו חיוב חוזר חדש של {amount} לחודש. להשאיר?",
+    "anom_interest-charge_title": "ריבית ועמלות יתר",
+    "anom_interest-charge_body": "כ-{amount} החודש. לעיתים קרובות ניתן להימנע.",
+    "anom_fee-spike_title": "העמלות עלו החודש",
+    "anom_fee-spike_body": "{amount} לעומת {amount2} הרגילים."
   }
 }

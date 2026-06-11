@@ -587,6 +587,44 @@ export function getMerchantChargeDays(
     .all(workspaceId, monthsBack, ...acct.values) as MerchantChargeDay[];
 }
 
+export interface AnomalyTransactionRow {
+  id: number;
+  date: string;
+  description: string;
+  amount: number;
+  originalCurrency: string;
+  categoryId: number | null;
+  categoryName: string | null;
+}
+
+export function getTransactionsForAnomalies(
+  workspaceId: number,
+  monthsBack: number,
+  filter: AccountFilter = {},
+): AnomalyTransactionRow[] {
+  const acct = buildAccountFilterClause(filter, "t.");
+  return getDb()
+    .prepare(
+      `SELECT t.id as id,
+              t.date as date,
+              t.description as description,
+              ABS(t.charged_amount) as amount,
+              t.original_currency as originalCurrency,
+              t.category_id as categoryId,
+              c.name as categoryName
+       FROM transactions t
+       LEFT JOIN categories c ON t.category_id = c.id
+       WHERE t.workspace_id = ?
+         AND t.date >= date('now', 'start of month', '-' || ? || ' months')
+         AND t.status = 'completed'
+         AND t.kind = 'expense'
+         AND t.is_excluded = 0
+         AND t.description != ''${acct.sql}
+       ORDER BY t.date ASC`,
+    )
+    .all(workspaceId, monthsBack, ...acct.values) as AnomalyTransactionRow[];
+}
+
 export function getTopMerchants(
   workspaceId: number,
   from: string,

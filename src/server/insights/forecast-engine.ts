@@ -15,7 +15,9 @@ import {
   getCategorySpendInRange,
   getMerchantChargeDays,
   getMerchantMonthlySpend,
+  getTransactionsForAnomalies,
 } from "@/server/db/queries/transactions";
+import { type AnomalyTxn, detectAnomalies } from "@/server/insights/anomalies";
 import { type CategoryMeta, computeMonthRanges, rollUpByParent } from "@/server/insights/compute";
 import { computeForecast } from "@/server/insights/forecast";
 import {
@@ -28,11 +30,13 @@ import {
   detectRecurring,
   type MerchantSeries,
 } from "@/server/insights/recurring";
+import { normalizeMerchant } from "@/server/lib/merchant-memory";
 import { daysUntil, nextPayday } from "@/server/lib/pace";
 
 const RECURRING_MONTHS = 6;
 const RECURRING_LIMIT = 24;
 const FEES_CATEGORY_NAME = "Fees & Taxes";
+const HOME_CURRENCY = "ILS";
 
 function safe<T>(section: InsightSection, errors: InsightSectionError[], fn: () => T): T | null {
   try {
@@ -246,12 +250,38 @@ export function buildForecastPayload(
 
   const totalSavings = (savings ?? []).reduce((sum, s) => sum + s.estimatedMonthly, 0);
 
+  const anomalies = safe("insights", errors, () => {
+    const rows = getTransactionsForAnomalies(workspaceId, RECURRING_MONTHS, filter);
+    const txns: AnomalyTxn[] = rows.map((r) => {
+      const display = r.description.trim();
+      return {
+        id: r.id,
+        date: r.date,
+        monthKey: r.date.slice(0, 7),
+        merchant: normalizeMerchant(r.description) || display.toLowerCase(),
+        displayMerchant: display,
+        description: r.description,
+        amount: r.amount,
+        originalCurrency: r.originalCurrency,
+        categoryId: r.categoryId,
+        categoryName: r.categoryName,
+      };
+    });
+    return detectAnomalies({
+      txns,
+      currentMonthKey: ranges.current.from.slice(0, 7),
+      homeCurrency: HOME_CURRENCY,
+      feesCategoryName: FEES_CATEGORY_NAME,
+    });
+  });
+
   return {
     forecast,
     fixedVsVariable,
     recurring: recurring ? recurring.slice(0, RECURRING_LIMIT) : null,
     savings,
     recommendations,
+    anomalies,
     totalSavings,
     errors,
   };

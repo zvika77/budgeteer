@@ -1152,5 +1152,26 @@
     "focusDoneTitle": "Nicely done",
     "focusDoneBody": "You've stepped through every flagged transaction.",
     "focusBack": "Back to review"
+  },
+  "anomalies": {
+    "title": "Worth a look",
+    "subtitle": "{count} to check this month",
+    "emptyTitle": "Nothing unusual",
+    "emptyBody": "No duplicate, foreign, or out-of-pattern charges this month.",
+    "reviewCta": "Review",
+    "anom_duplicate-charge_title": "Possible double charge at {merchant}",
+    "anom_duplicate-charge_body": "Two charges of {amount} within a few days. Check it is not a mistake.",
+    "anom_foreign-charge_title": "New foreign charge at {merchant}",
+    "anom_foreign-charge_body": "{amount} from a merchant you have not used before.",
+    "anom_merchant-outlier_title": "{merchant} is higher than usual",
+    "anom_merchant-outlier_body": "{amount} this time vs your usual {amount2}.",
+    "anom_price-creep_title": "{merchant} went up",
+    "anom_price-creep_body": "Now {amount}/mo, up from {amount2} ({percent}% more).",
+    "anom_new-subscription_title": "New subscription: {merchant}",
+    "anom_new-subscription_body": "Looks like a new recurring charge of {amount}/mo. Keep it?",
+    "anom_interest-charge_title": "Interest and overdraft fees",
+    "anom_interest-charge_body": "About {amount} this month. Often avoidable.",
+    "anom_fee-spike_title": "Fees are up this month",
+    "anom_fee-spike_body": "{amount} vs your usual {amount2}."
   }
 }

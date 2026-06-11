@@ -54,7 +54,7 @@ The "bottom line" front and center: will you finish the month in the plus or the
 <td width="33%" valign="top">
 
 ### 💸 Safe to spend & ways to save
-A daily and weekly amount that keeps you on track, plus friendly, non-judgmental suggestions: subscriptions to cancel, categories running high, and avoidable fees, each with a ₪/month estimate.
+A daily and weekly amount that keeps you on track, plus friendly, non-judgmental suggestions: subscriptions to cancel, categories running high, and avoidable fees, each with a ₪/month estimate. A "Worth a look" panel flags likely double charges, unfamiliar foreign charges, merchant prices that crept up, brand-new subscriptions, and interest or fee spikes.
 
 </td>
 <td width="33%" valign="top">

@@ -8,6 +8,7 @@ const dynamicNamespaces = [
   "settings.sidebar.*",
   "nav.*",
   "recommendations.*",
+  "anomalies.*",
 ];
 
 const baseline = [

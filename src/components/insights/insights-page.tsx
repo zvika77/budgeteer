@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { CardError, CardSkeleton } from "@/components/home/card-shell";
+import { AnomaliesCard } from "@/components/insights/anomalies-card";
 import { FixedVsVariableCard } from "@/components/insights/fixed-vs-variable";
 import { RecommendationCard } from "@/components/insights/recommendation-card";
 import { RecurringSpending } from "@/components/insights/recurring-spending";
@@ -63,8 +64,9 @@ export function InsightsPage() {
               <div className="col-span-12 lg:col-span-7">
                 <RecurringSpending recurring={data.recurring ?? []} />
               </div>
-              <div className="col-span-12 lg:col-span-5">
+              <div className="col-span-12 flex flex-col gap-4 md:gap-6 lg:col-span-5">
                 <SavingsList savings={data.savings ?? []} totalSavings={data.totalSavings} />
+                <AnomaliesCard anomalies={data.anomalies ?? []} />
               </div>
             </div>
           </div>

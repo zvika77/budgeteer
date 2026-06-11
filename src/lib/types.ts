@@ -462,12 +462,38 @@ export interface Recommendation {
   href: string | null;
 }
 
+export type AnomalyType =
+  | "duplicate-charge"
+  | "foreign-charge"
+  | "merchant-outlier"
+  | "price-creep"
+  | "new-subscription"
+  | "interest-charge"
+  | "fee-spike";
+
+export type AnomalySeverity = "flag" | "watch";
+
+export interface Anomaly {
+  id: string;
+  type: AnomalyType;
+  severity: AnomalySeverity;
+  merchant: string | null;
+  categoryName: string | null;
+  amount: number | null;
+  amount2: number | null;
+  percent: number | null;
+  currency: string | null;
+  occurredAt: string | null;
+  transactionIds: number[];
+}
+
 export interface ForecastPayload {
   forecast: Forecast | null;
   fixedVsVariable: FixedVsVariable | null;
   recurring: RecurringCharge[] | null;
   savings: SavingsOpportunity[] | null;
   recommendations: Recommendation[] | null;
+  anomalies: Anomaly[] | null;
   totalSavings: number;
   errors: InsightSectionError[];
 }
