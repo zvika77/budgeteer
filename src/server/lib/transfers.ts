@@ -25,7 +25,7 @@ export type CardPaymentMatch = { issuer: CardIssuer } | { issuer: "ambiguous" } 
 export const CARD_ISSUERS: readonly CardIssuer[] = ["isracard", "cal", "max", "amex"];
 
 const ISSUER_PATTERNS: Record<CardIssuer, readonly RegExp[]> = {
-  isracard: [/ישראכרט/i, /ישרא[\s־-]?כארד/i, /\bISRACARD\b/i],
+  isracard: [/ישראכרט/i, /ישרא[\s\-־]?כארד/i, /\bISRACARD\b/i],
   cal: [/כ[\s.\-־]?א[\s.\-־]?ל/i, /\bCAL\b/i],
   max: [/מקסימום/i, /לאומי\s*קארד/i, /\bMAX\b/i, /\bLEUMI\s+CARD\b/i],
   amex: [/אמריקן\s*אקספרס/i, /אמקס/i, /\bAMEX\b/i, /\bAMERICAN\s+EXPRESS\b/i],

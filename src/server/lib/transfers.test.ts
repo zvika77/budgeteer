@@ -64,16 +64,25 @@ describe("matchCardPaymentIssuer", () => {
     expect(matchCardPaymentIssuer("מקסימום פיננסים")).toEqual({ issuer: "max" });
     expect(matchCardPaymentIssuer("לאומי קארד")).toEqual({ issuer: "max" });
     expect(matchCardPaymentIssuer("AMERICAN EXPRESS")).toEqual({ issuer: "amex" });
+    expect(matchCardPaymentIssuer("MAX")).toEqual({ issuer: "max" });
+    expect(matchCardPaymentIssuer("CAL")).toEqual({ issuer: "cal" });
+    expect(matchCardPaymentIssuer("AMEX")).toEqual({ issuer: "amex" });
   });
 
   test("issuer wins over network when both appear", () => {
     expect(matchCardPaymentIssuer("ויזה כ.א.ל")).toEqual({ issuer: "cal" });
+    expect(matchCardPaymentIssuer("VISA ישראכרט")).toEqual({ issuer: "isracard" });
   });
 
   test("network-only descriptions are ambiguous", () => {
     expect(matchCardPaymentIssuer("חיוב ויזה")).toEqual({ issuer: "ambiguous" });
     expect(matchCardPaymentIssuer("מאסטרקארד")).toEqual({ issuer: "ambiguous" });
     expect(matchCardPaymentIssuer("כרטיסי אשראי")).toEqual({ issuer: "ambiguous" });
+  });
+
+  test("MAX issuer pattern matches the standalone token", () => {
+    expect(matchCardPaymentIssuer("תשלום MAX")).toEqual({ issuer: "max" });
+    expect(matchCardPaymentIssuer("מקסימום")).toEqual({ issuer: "max" });
   });
 
   test("non-card descriptions return null", () => {
@@ -93,14 +102,22 @@ describe("matchCardPaymentIssuer", () => {
       "כרטיסי אשראי",
       "העברת משכורת",
       "סופרמרקט",
+      "AMEX",
+      "MAX",
+      "CAL",
+      "ISRACARD",
+      "LEUMI CARD",
     ];
     for (const s of samples) {
       expect(matchCardPaymentIssuer(s) !== null).toBe(matchesCreditCardPayment(s));
     }
   });
 
-  test("CREDIT_CARD_PAYMENT_PATTERNS still exposes a flat regex list", () => {
-    expect(CREDIT_CARD_PAYMENT_PATTERNS.length).toBeGreaterThan(0);
-    expect(CREDIT_CARD_PAYMENT_PATTERNS.every((p) => p instanceof RegExp)).toBe(true);
+  test("CREDIT_CARD_PAYMENT_PATTERNS covers issuer and ambiguous patterns", () => {
+    const matchesAnyPattern = (s: string) => CREDIT_CARD_PAYMENT_PATTERNS.some((p) => p.test(s));
+    expect(matchesAnyPattern("ישראכרט")).toBe(true);
+    expect(matchesAnyPattern("MAX")).toBe(true);
+    expect(matchesAnyPattern("חיוב ויזה")).toBe(true);
+    expect(matchesAnyPattern("סופרמרקט")).toBe(false);
   });
 });
