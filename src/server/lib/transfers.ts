@@ -19,30 +19,34 @@ const BANK_PROVIDERS_SET: ReadonlySet<BankProvider> = new Set<BankProvider>([
   "oneZero",
 ]);
 
-export const CREDIT_CARD_PAYMENT_PATTERNS: readonly RegExp[] = [
+export type CardIssuer = "isracard" | "cal" | "max" | "amex";
+export type CardPaymentMatch = { issuer: CardIssuer } | { issuer: "ambiguous" } | null;
+
+export const CARD_ISSUERS: readonly CardIssuer[] = ["isracard", "cal", "max", "amex"];
+
+const ISSUER_PATTERNS: Record<CardIssuer, readonly RegExp[]> = {
+  isracard: [/ישראכרט/i, /ישרא[\s־-]?כארד/i, /\bISRACARD\b/i],
+  cal: [/כ[\s.\-־]?א[\s.\-־]?ל/i, /\bCAL\b/i],
+  max: [/מקסימום/i, /לאומי\s*קארד/i, /\bMAX\b/i, /\bLEUMI\s+CARD\b/i],
+  amex: [/אמריקן\s*אקספרס/i, /אמקס/i, /\bAMEX\b/i, /\bAMERICAN\s+EXPRESS\b/i],
+};
+
+const AMBIGUOUS_CARD_PATTERNS: readonly RegExp[] = [
   /ויזה/i,
-  /ישראכרט/i,
-  /ישרא[\s־-]?כארד/i,
-  /כ[\s.\-־]?א[\s.\-־]?ל/i,
-  /מקסימום/i,
   /מאסטרקארד/i,
-  /אמריקן\s*אקספרס/i,
-  /אמקס/i,
   /דיינרס/i,
   /תשלום\s*אשראי/i,
   /כרטיסי?\s*אשראי/i,
   /חיוב\s*כרטיס/i,
-  /לאומי\s*קארד/i,
   /חיוב\s*לכרטיס/i,
-  /\bISRACARD\b/i,
   /\bVISA\b/i,
   /\bMASTERCARD\b/i,
-  /\bCAL\b/i,
-  /\bMAX\b/i,
   /\bDINERS\b/i,
-  /\bAMEX\b/i,
-  /\bAMERICAN\s+EXPRESS\b/i,
-  /\bLEUMI\s+CARD\b/i,
+];
+
+export const CREDIT_CARD_PAYMENT_PATTERNS: readonly RegExp[] = [
+  ...CARD_ISSUERS.flatMap((issuer) => ISSUER_PATTERNS[issuer]),
+  ...AMBIGUOUS_CARD_PATTERNS,
 ];
 
 const INTERNAL_TRANSFER_PATTERNS: readonly RegExp[] = [
@@ -77,6 +81,20 @@ function matchesTransferPattern(description: string): boolean {
 
 export function matchesCreditCardPayment(description: string): boolean {
   return matchesAny(description, CREDIT_CARD_PAYMENT_PATTERNS);
+}
+
+export function matchCardPaymentIssuer(description: string): CardPaymentMatch {
+  const normalized = description.replace(/\s+/g, " ").trim();
+  if (!normalized) return null;
+  for (const issuer of CARD_ISSUERS) {
+    if (ISSUER_PATTERNS[issuer].some((pattern) => pattern.test(normalized))) {
+      return { issuer };
+    }
+  }
+  if (AMBIGUOUS_CARD_PATTERNS.some((pattern) => pattern.test(normalized))) {
+    return { issuer: "ambiguous" };
+  }
+  return null;
 }
 
 export function matchesInternalTransfer(description: string): boolean {
