@@ -26,8 +26,8 @@ export const CARD_ISSUERS: readonly CardIssuer[] = ["amex", "behatsdaa", "beyaha
 
 const ISSUER_PATTERNS: Record<CardIssuer, readonly RegExp[]> = {
   amex: [/אמריקן\s*אקספרס/i, /אמקס/i, /\bAMEX\b/i, /\bAMERICAN\s+EXPRESS\b/i],
-  behatsdaa: [/בהצדעה/i, /\bBEHATSDAA\b/i],
-  beyahadBishvilha: [/ביחד\s*בשבילה/i, /\bBEYAHAD\s+BISHVILHA\b/i],
+  behatsdaa: [],
+  beyahadBishvilha: [],
   cal: [/כ[\s.\-־]?א[\s.\-־]?ל/i, /\bCAL\b/i],
   isracard: [/ישראכרט/i, /ישרא[\s\-־]?כארד/i, /\bISRACARD\b/i],
   max: [/מקסימום/i, /לאומי\s*קארד/i, /\bMAX\b/i, /\bLEUMI\s+CARD\b/i],

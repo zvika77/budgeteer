@@ -120,4 +120,14 @@ describe("matchCardPaymentIssuer", () => {
     expect(matchesAnyPattern("חיוב ויזה")).toBe(true);
     expect(matchesAnyPattern("סופרמרקט")).toBe(false);
   });
+
+  test("does not classify the sub-brand names as card payments", () => {
+    expect(matchCardPaymentIssuer("בהצדעה")).toBeNull();
+    expect(matchCardPaymentIssuer("ביחד בשבילך")).toBeNull();
+    expect(detectKind("בהצדעה", "leumi", -100)).toBe("expense");
+  });
+
+  test("CREDIT_CARD_PAYMENT_PATTERNS holds the original 23 patterns", () => {
+    expect(CREDIT_CARD_PAYMENT_PATTERNS).toHaveLength(23);
+  });
 });
