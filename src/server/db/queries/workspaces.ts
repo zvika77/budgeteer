@@ -159,6 +159,14 @@ const SEED_CATEGORIES: SeedCategory[] = [
       "ATM withdrawals, cash advances, currency exchange. Often labeled bankomat / כספומט.",
   },
   {
+    name: "Credit Card",
+    color: "#C7B27A",
+    icon: "credit-card",
+    kind: "expense",
+    description:
+      "Lump credit-card bill payments from a bank when the card itself is not connected.",
+  },
+  {
     name: "Transfers",
     color: "#A2AAC2",
     icon: "arrow-left-right",

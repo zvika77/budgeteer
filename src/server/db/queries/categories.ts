@@ -262,6 +262,7 @@ export const SEEDED_CATEGORY_PARENTS: Record<string, string> = {
   "Kids & Childcare": "Health & Family",
   "Pet Care": "Health & Family",
   "Cash & ATM": "Money Movement",
+  "Credit Card": "Money Movement",
   Transfers: "Money Movement",
   "Gifts & Donations": "Money Movement",
   "Fees & Taxes": "Money Movement",
