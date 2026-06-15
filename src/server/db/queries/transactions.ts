@@ -1081,8 +1081,8 @@ export function getNeedsReviewCountByCategory(
 ): NeedsReviewCount[] {
   const conditions = [
     "workspace_id = ?",
-    "date >= ?",
-    "date <= ?",
+    "local_date >= ?",
+    "local_date <= ?",
     "status = 'completed'",
     "kind = 'expense'",
     "needs_review = 1",
