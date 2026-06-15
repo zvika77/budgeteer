@@ -7,6 +7,7 @@ import {
   groupAccountsForFilter,
   groupSelectionValue,
   parseAccountSelection,
+  selectionStringToKeys,
   selectionToKeys,
 } from "@/lib/account-group";
 import type { BankAccount } from "@/lib/types";
@@ -159,5 +160,31 @@ describe("selectionToKeys", () => {
   test("returns nothing for unknown or malformed selections", () => {
     expect(selectionToKeys(all, accountSelectionValue(999))).toEqual([]);
     expect(selectionToKeys(all, "garbage")).toEqual([]);
+  });
+});
+
+describe("selectionStringToKeys", () => {
+  test("unions multiple account tokens", () => {
+    expect(selectionStringToKeys(all, "a:1,a:2")).toEqual([
+      { credentialId: 1, accountNumber: "4929" },
+      { credentialId: 1, accountNumber: "7408" },
+    ]);
+  });
+
+  test("dedupes keys shared between an account token and a group token", () => {
+    expect(selectionStringToKeys(all, "a:2,g:1:12-640-490192")).toEqual([
+      { credentialId: 1, accountNumber: "7408" },
+      { credentialId: 1, accountNumber: "5287" },
+    ]);
+  });
+
+  test("returns empty for an empty string", () => {
+    expect(selectionStringToKeys(all, "")).toEqual([]);
+  });
+
+  test("ignores unknown and blank tokens", () => {
+    expect(selectionStringToKeys(all, "a:999,,a:1")).toEqual([
+      { credentialId: 1, accountNumber: "4929" },
+    ]);
   });
 });

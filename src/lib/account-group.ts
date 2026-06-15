@@ -105,3 +105,21 @@ export function selectionToKeys(accounts: BankAccount[], raw: string): AccountKe
       accountNumber: account.accountNumber,
     }));
 }
+
+export function selectionStringToKeys(accounts: BankAccount[], raw: string): AccountKey[] {
+  const tokens = raw
+    .split(",")
+    .map((t) => t.trim())
+    .filter((t) => t.length > 0);
+  const seen = new Set<string>();
+  const result: AccountKey[] = [];
+  for (const token of tokens) {
+    for (const key of selectionToKeys(accounts, token)) {
+      const dedupeKey = `${key.credentialId}:${key.accountNumber}`;
+      if (seen.has(dedupeKey)) continue;
+      seen.add(dedupeKey);
+      result.push(key);
+    }
+  }
+  return result;
+}
