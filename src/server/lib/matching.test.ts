@@ -1,7 +1,13 @@
 import { describe, expect, test } from "bun:test";
 
 import type { MatchSettings } from "@/lib/types";
-import { type MatchCandidate, type MatchSettingsMap, proposeEvents } from "@/server/lib/matching";
+import {
+  type CardBillingGroup,
+  type MatchCandidate,
+  type MatchSettingsMap,
+  buildCardBillingGroups,
+  proposeEvents,
+} from "@/server/lib/matching";
 import type { CardIssuer } from "@/server/lib/transfers";
 
 const noCards = new Set<CardIssuer>();
@@ -193,5 +199,57 @@ describe("proposeEvents", () => {
       NO_ATM,
     );
     expect(events).toHaveLength(0);
+  });
+});
+
+const purchase = (over: Partial<MatchCandidate>): MatchCandidate => ({
+  id: 0,
+  credentialId: 8,
+  accountNumber: "8682",
+  provider: "cal",
+  date: "2026-05-12T00:00:00.000Z",
+  processedDate: "2026-06-09T00:00:00.000Z",
+  chargedAmount: -100,
+  chargedCurrency: "ILS",
+  description: "x",
+  kind: "expense",
+  dedupHash: "h",
+  dedupSequence: 0,
+  ...over,
+});
+
+describe("buildCardBillingGroups", () => {
+  test("groups a connected card's purchases by processed-date into a summed group", () => {
+    const groups = buildCardBillingGroups(
+      [
+        purchase({ id: 1, chargedAmount: -102 }),
+        purchase({ id: 2, chargedAmount: -17.9 }),
+        purchase({ id: 3, processedDate: "2026-07-09T00:00:00.000Z", chargedAmount: -50 }),
+      ],
+      new Set<CardIssuer>(["cal"]),
+    );
+    const june = groups.find((g) => g.billingDay === Math.floor(Date.parse("2026-06-09") / 86_400_000));
+    expect(june?.amount).toBeCloseTo(119.9, 2);
+    expect(june?.accountNumber).toBe("8682");
+    expect(june?.transactionIds.sort()).toEqual([1, 2]);
+  });
+
+  test("ignores purchases from issuers that are not connected", () => {
+    const groups = buildCardBillingGroups(
+      [purchase({ id: 1, provider: "max", chargedAmount: -102 })],
+      new Set<CardIssuer>(["cal"]),
+    );
+    expect(groups).toHaveLength(0);
+  });
+
+  test("keeps cards apart even on the same billing day", () => {
+    const groups = buildCardBillingGroups(
+      [
+        purchase({ id: 1, accountNumber: "8682", chargedAmount: -100 }),
+        purchase({ id: 2, accountNumber: "2315", chargedAmount: -200 }),
+      ],
+      new Set<CardIssuer>(["cal"]),
+    );
+    expect(groups).toHaveLength(2);
   });
 });

@@ -3,6 +3,7 @@ import "server-only";
 import type { EventRole, EventType, MatchSettings } from "@/lib/types";
 import { findInternalTransferPairs } from "@/server/lib/internal-transfers";
 import {
+  CARD_ISSUERS,
   type CardIssuer,
   cardIssuerLabel,
   isAtmWithdrawal,
@@ -68,6 +69,47 @@ function eventKeyFor(eventType: EventType, members: MatchCandidate[]): string {
 
 function clamp01(n: number): number {
   return Math.max(0, Math.min(1, n));
+}
+
+export interface CardBillingGroup {
+  credentialId: number | null;
+  accountNumber: string;
+  issuer: CardIssuer;
+  billingDay: number;
+  amount: number;
+  transactionIds: number[];
+}
+
+const CARD_ISSUER_SET: ReadonlySet<string> = new Set(CARD_ISSUERS);
+
+export function buildCardBillingGroups(
+  candidates: readonly MatchCandidate[],
+  connectedCardIssuers: ReadonlySet<CardIssuer>,
+): CardBillingGroup[] {
+  const byKey = new Map<string, CardBillingGroup>();
+  for (const c of candidates) {
+    if (!CARD_ISSUER_SET.has(c.provider)) continue;
+    const issuer = c.provider as CardIssuer;
+    if (!connectedCardIssuers.has(issuer)) continue;
+    const billingDay = dayNumber(c.processedDate);
+    if (Number.isNaN(billingDay)) continue;
+    const key = `${c.accountNumber}:${billingDay}`;
+    const existing = byKey.get(key);
+    if (existing) {
+      existing.amount += Math.abs(c.chargedAmount);
+      existing.transactionIds.push(c.id);
+    } else {
+      byKey.set(key, {
+        credentialId: c.credentialId,
+        accountNumber: c.accountNumber,
+        issuer,
+        billingDay,
+        amount: Math.abs(c.chargedAmount),
+        transactionIds: [c.id],
+      });
+    }
+  }
+  return [...byKey.values()];
 }
 
 function scoreInternalTransfer(
