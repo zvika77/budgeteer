@@ -225,6 +225,7 @@ export function proposeEvents(
 
   const cc = settings.credit_card_payment;
   if (cc?.enabled) {
+    const groups = buildCardBillingGroups(candidates, opts.connectedCardIssuers);
     const hasAnyCard = opts.connectedCardIssuers.size > 0;
     for (const cand of candidates) {
       if (used.has(cand.id)) continue;
@@ -233,23 +234,55 @@ export function proposeEvents(
       const match = matchCardPaymentIssuer(cand.description);
       if (!match) continue;
 
-      let flipKindTo: TransactionKind | null = null;
-      let needsReview = false;
-      let reason: string;
-      if (!hasAnyCard) {
-        flipKindTo = "expense";
-        reason = "No credit card connected; bill counted as spend";
-      } else if (match.issuer === "ambiguous") {
-        flipKindTo = "expense";
-        needsReview = true;
-        reason = "Card issuer undetermined; counted as spend - confirm";
-      } else if (opts.connectedCardIssuers.has(match.issuer)) {
-        reason =
-          "Bank-side credit card bill payment (the individual card purchases are counted instead)";
-      } else {
-        flipKindTo = "expense";
-        reason = `${cardIssuerLabel(match.issuer)} not connected; bill counted as spend`;
+      const covered = matchBillToGroup(cand.chargedAmount, cand.date, groups);
+      if (covered) {
+        const purchases = covered.transactionIds
+          .map((id) => byId.get(id))
+          .filter((p): p is MatchCandidate => p != null && !used.has(p.id));
+        const members: ProposedMember[] = [
+          {
+            transactionId: cand.id,
+            role: "bill_payment",
+            flipKindTo: "transfer",
+            priorKind: cand.kind,
+            grouping: true,
+          },
+          ...purchases.map((p) => ({
+            transactionId: p.id,
+            role: "purchase" as EventRole,
+            flipKindTo: null,
+            priorKind: p.kind,
+            grouping: false,
+          })),
+        ];
+        events.push({
+          eventType: "credit_card_statement",
+          members,
+          canonicalTransactionId: null,
+          confidence: 0.95,
+          reasons: [
+            `Bill ${Math.abs(cand.chargedAmount).toFixed(2)} matches card ${covered.accountNumber} statement`,
+          ],
+          eventKey: eventKeyFor("credit_card_statement", [cand, ...purchases]),
+          needsReview: false,
+        });
+        used.add(cand.id);
+        for (const p of purchases) used.add(p.id);
+        continue;
       }
+
+      const issuerConnected =
+        match.issuer !== "ambiguous" && opts.connectedCardIssuers.has(match.issuer);
+      const issuerNamedNotConnected =
+        match.issuer !== "ambiguous" && !opts.connectedCardIssuers.has(match.issuer);
+      const needsReview = hasAnyCard && !issuerNamedNotConnected;
+      const reason = !hasAnyCard
+        ? "No credit card connected; bill counted as spend"
+        : issuerNamedNotConnected
+          ? `${cardIssuerLabel(match.issuer)} not connected; bill counted as spend`
+          : issuerConnected
+            ? "Connected card, but no matching statement found; counted as spend - confirm"
+            : "Card issuer undetermined and unmatched; counted as spend - confirm";
 
       events.push({
         eventType: "credit_card_payment",
@@ -257,7 +290,7 @@ export function proposeEvents(
           {
             transactionId: cand.id,
             role: "bill_payment",
-            flipKindTo,
+            flipKindTo: "expense",
             priorKind: cand.kind,
             grouping: true,
           },

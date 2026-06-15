@@ -2,10 +2,10 @@ import { describe, expect, test } from "bun:test";
 
 import type { MatchSettings } from "@/lib/types";
 import {
+  buildCardBillingGroups,
   type CardBillingGroup,
   type MatchCandidate,
   type MatchSettingsMap,
-  buildCardBillingGroups,
   matchBillToGroup,
   proposeEvents,
 } from "@/server/lib/matching";
@@ -102,15 +102,15 @@ describe("proposeEvents", () => {
     expect(events[0].needsReview).toBe(false);
   });
 
-  test("excludes a bill payment when its issuer is connected", () => {
+  test("counts a connected-issuer bill with no matching statement as spend for review", () => {
     const events = proposeEvents(
       [cand({ id: 5, provider: "leumi", kind: "transfer", description: "תשלום לכ.א.ל" })],
       SETTINGS,
       { treatAtmAsTransfers: false, connectedCardIssuers: withCal },
     );
     expect(events).toHaveLength(1);
-    expect(events[0].members[0].flipKindTo).toBeNull();
-    expect(events[0].needsReview).toBe(false);
+    expect(events[0].members[0].flipKindTo).toBe("expense");
+    expect(events[0].needsReview).toBe(true);
   });
 
   test("counts a bill payment when a different issuer is connected", () => {
@@ -130,26 +130,6 @@ describe("proposeEvents", () => {
       { treatAtmAsTransfers: false, connectedCardIssuers: noCards },
     );
     expect(events[0].members[0].flipKindTo).toBe("expense");
-    expect(events[0].needsReview).toBe(false);
-  });
-
-  test("counts an ambiguous bill as spend and flags it for review when a card is connected", () => {
-    const events = proposeEvents(
-      [cand({ id: 5, provider: "leumi", kind: "transfer", description: "חיוב ויזה" })],
-      SETTINGS,
-      { treatAtmAsTransfers: false, connectedCardIssuers: withCal },
-    );
-    expect(events[0].members[0].flipKindTo).toBe("expense");
-    expect(events[0].needsReview).toBe(true);
-  });
-
-  test("excludes a Leumi (כא) Visa bill when Cal is connected", () => {
-    const events = proposeEvents(
-      [cand({ id: 5, provider: "leumi", kind: "transfer", description: "לאומי ויזה(כא)" })],
-      SETTINGS,
-      { treatAtmAsTransfers: false, connectedCardIssuers: withCal },
-    );
-    expect(events[0].members[0].flipKindTo).toBeNull();
     expect(events[0].needsReview).toBe(false);
   });
 
@@ -229,7 +209,9 @@ describe("buildCardBillingGroups", () => {
       ],
       new Set<CardIssuer>(["cal"]),
     );
-    const june = groups.find((g) => g.billingDay === Math.floor(Date.parse("2026-06-09") / 86_400_000));
+    const june = groups.find(
+      (g) => g.billingDay === Math.floor(Date.parse("2026-06-09") / 86_400_000),
+    );
     expect(june?.amount).toBeCloseTo(119.9, 2);
     expect(june?.accountNumber).toBe("8682");
     expect(june?.transactionIds.sort()).toEqual([1, 2]);
@@ -282,7 +264,72 @@ describe("matchBillToGroup", () => {
 
   test("ambiguous (two groups, same amount and day) returns null", () => {
     expect(
-      matchBillToGroup(119.9, billDay, [group({ accountNumber: "8682" }), group({ accountNumber: "2315" })]),
+      matchBillToGroup(119.9, billDay, [
+        group({ accountNumber: "8682" }),
+        group({ accountNumber: "2315" }),
+      ]),
     ).toBeNull();
+  });
+});
+
+describe("card statement matching", () => {
+  const billCand = (over: Partial<MatchCandidate> & { id: number }): MatchCandidate =>
+    cand({ provider: "leumi", kind: "transfer", ...over });
+
+  test("a generic bill that equals a connected card's cycle becomes a covered statement", () => {
+    const events = proposeEvents(
+      [
+        billCand({
+          id: 10,
+          chargedAmount: -119.9,
+          date: "2026-06-10T00:00:00.000Z",
+          description: "כרטיסי אשראי",
+        }),
+        purchase({ id: 1, chargedAmount: -102, processedDate: "2026-06-09T00:00:00.000Z" }),
+        purchase({ id: 2, chargedAmount: -17.9, processedDate: "2026-06-09T00:00:00.000Z" }),
+      ],
+      SETTINGS,
+      { treatAtmAsTransfers: false, connectedCardIssuers: withCal },
+    );
+    const ev = events.find((e) => e.eventType === "credit_card_statement");
+    expect(ev).toBeTruthy();
+    const bill = ev?.members.find((m) => m.role === "bill_payment");
+    expect(bill?.transactionId).toBe(10);
+    expect(bill?.flipKindTo).toBe("transfer");
+    expect(
+      ev?.members
+        .filter((m) => m.role === "purchase")
+        .map((m) => m.transactionId)
+        .sort(),
+    ).toEqual([1, 2]);
+  });
+
+  test("an unmatched generic bill is a Credit Card cost flagged for review", () => {
+    const events = proposeEvents(
+      [
+        billCand({
+          id: 11,
+          chargedAmount: -8411.42,
+          date: "2026-06-01T00:00:00.000Z",
+          description: "כרטיסי אשראי",
+        }),
+      ],
+      SETTINGS,
+      { treatAtmAsTransfers: false, connectedCardIssuers: withCal },
+    );
+    const ev = events.find((e) => e.eventType === "credit_card_payment");
+    expect(ev?.members[0].flipKindTo).toBe("expense");
+    expect(ev?.needsReview).toBe(true);
+  });
+
+  test("a named not-connected issuer is a cost without review", () => {
+    const events = proposeEvents(
+      [billCand({ id: 12, chargedAmount: -1759.7, description: "מקס איט פיננ" })],
+      SETTINGS,
+      { treatAtmAsTransfers: false, connectedCardIssuers: withCal },
+    );
+    const ev = events.find((e) => e.eventType === "credit_card_payment");
+    expect(ev?.members[0].flipKindTo).toBe("expense");
+    expect(ev?.needsReview).toBe(false);
   });
 });
