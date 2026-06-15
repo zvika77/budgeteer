@@ -259,11 +259,11 @@ export function queryTransactions(
   const values: (string | number)[] = [workspaceId];
 
   if (params.from) {
-    conditions.push("t.date >= ?");
+    conditions.push("t.local_date >= ?");
     values.push(params.from);
   }
   if (params.to) {
-    conditions.push("t.date <= ?");
+    conditions.push("t.local_date <= ?");
     values.push(params.to);
   }
   if (params.search) {
@@ -503,7 +503,7 @@ export function getMonthlySummary(
   appendAccountFilter(conditions, values, filter);
   return getDb()
     .prepare(
-      `SELECT strftime('%Y-%m', date) as month,
+      `SELECT substr(local_date, 1, 7) as month,
               SUM((-charged_amount)) as amount
        FROM transactions
        WHERE ${conditions.join(" AND ")}
@@ -527,7 +527,7 @@ export function getCategoryMonthlySpend(
   const acct = buildAccountFilterClause(filter);
   return getDb()
     .prepare(
-      `SELECT strftime('%Y-%m', date) as month,
+      `SELECT substr(local_date, 1, 7) as month,
               category_id as categoryId,
               SUM((-charged_amount)) as amount
        FROM transactions
@@ -558,7 +558,7 @@ export function getMerchantMonthlySpend(
   const acct = buildAccountFilterClause(filter);
   return getDb()
     .prepare(
-      `SELECT strftime('%Y-%m', date) as month,
+      `SELECT substr(local_date, 1, 7) as month,
               description as merchant,
               category_id as categoryId,
               SUM((-charged_amount)) as amount
@@ -589,7 +589,7 @@ export function getMerchantChargeDays(
   return getDb()
     .prepare(
       `SELECT description as merchant,
-              CAST(strftime('%d', date) AS INTEGER) as day
+              CAST(substr(local_date, 9, 2) AS INTEGER) as day
        FROM transactions
        WHERE workspace_id = ?
          AND date >= date('now', 'start of month', '-' || ? || ' months')
@@ -629,7 +629,7 @@ export function getTransactionsForAnomalies(
        FROM transactions t
        LEFT JOIN categories c ON t.category_id = c.id
        WHERE t.workspace_id = ?
-         AND t.date >= date('now', 'start of month', '-' || ? || ' months')
+         AND t.local_date >= date('now', 'start of month', '-' || ? || ' months')
          AND t.status = 'completed'
          AND t.kind = 'expense'
          AND t.is_excluded = 0
@@ -648,8 +648,8 @@ export function getTopMerchants(
 ): MerchantSummary[] {
   const conditions = [
     "workspace_id = ?",
-    "date >= ?",
-    "date <= ?",
+    "local_date >= ?",
+    "local_date <= ?",
     "status = 'completed'",
     "kind = 'expense'",
     "is_excluded = 0",
@@ -678,8 +678,8 @@ export function getCategoryBreakdown(
 ): CategoryBreakdown[] {
   const conditions = [
     "t.workspace_id = ?",
-    "t.date >= ?",
-    "t.date <= ?",
+    "t.local_date >= ?",
+    "t.local_date <= ?",
     "t.status = 'completed'",
     "t.kind = 'expense'",
     "t.is_excluded = 0",
@@ -717,8 +717,8 @@ export function getCategorySpendInRange(
 ): CategorySpend[] {
   const conditions = [
     "workspace_id = ?",
-    "date >= ?",
-    "date <= ?",
+    "local_date >= ?",
+    "local_date <= ?",
     "status = 'completed'",
     "kind = 'expense'",
     "category_id IS NOT NULL",
@@ -752,8 +752,8 @@ export function getTopMerchantPerCategory(
 ): CategoryTopMerchant[] {
   const conditions = [
     "workspace_id = ?",
-    "date >= ?",
-    "date <= ?",
+    "local_date >= ?",
+    "local_date <= ?",
     "status = 'completed'",
     "kind = 'expense'",
     "category_id IS NOT NULL",
@@ -800,7 +800,7 @@ export function getCategorySpendByDay(
               COALESCE(SUM((-t.charged_amount)), 0) as amount
        FROM days
        LEFT JOIN transactions t
-         ON substr(t.date, 1, 10) = days.d
+         ON t.local_date = days.d
          AND t.workspace_id = ?
          AND t.category_id = ?
          AND t.kind = 'expense'
@@ -830,7 +830,7 @@ export function getDailySpendTotals(
               COALESCE(SUM((-t.charged_amount)), 0) as amount
        FROM days
        LEFT JOIN transactions t
-         ON substr(t.date, 1, 10) = days.d
+         ON t.local_date = days.d
          AND t.workspace_id = ?
          AND t.kind = 'expense'
          AND t.status = 'completed'
@@ -863,7 +863,7 @@ export function getTopMerchantsForCategory(
               COUNT(*) as count
        FROM transactions
        WHERE workspace_id = ? AND category_id = ?
-         AND date >= ? AND date <= ?
+         AND local_date >= ? AND local_date <= ?
          AND status = 'completed'
          AND kind = 'expense'
          AND is_excluded = 0${acct.sql}
@@ -882,8 +882,8 @@ export function getPeriodTotal(
 ): number {
   const conditions = [
     "workspace_id = ?",
-    "date >= ?",
-    "date <= ?",
+    "local_date >= ?",
+    "local_date <= ?",
     "status = 'completed'",
     "kind = 'expense'",
     "is_excluded = 0",
@@ -908,8 +908,8 @@ export function getPeriodCount(
 ): number {
   const conditions = [
     "workspace_id = ?",
-    "date >= ?",
-    "date <= ?",
+    "local_date >= ?",
+    "local_date <= ?",
     "status = 'completed'",
     "kind = 'expense'",
     "is_excluded = 0",
