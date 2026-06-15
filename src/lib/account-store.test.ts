@@ -1,10 +1,11 @@
-import { afterEach, describe, expect, test } from "bun:test";
-import {
-  getAccountSelectionSync,
-  getAccountTokensSync,
-  setAccountTokens,
-  toggleAccountToken,
-} from "@/lib/account-store";
+import { afterEach, describe, expect, mock, test } from "bun:test";
+
+mock.module("react", () => ({
+  useSyncExternalStore: () => null,
+}));
+
+const { getAccountSelectionSync, getAccountTokensSync, setAccountTokens, toggleAccountToken } =
+  await import("@/lib/account-store");
 
 afterEach(() => {
   setAccountTokens([]);
