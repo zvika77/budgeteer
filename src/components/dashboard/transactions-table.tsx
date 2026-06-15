@@ -379,9 +379,16 @@ export function TransactionsTable({
                   const isIncome = txn.chargedAmount > 0;
                   const directionColor = isIncome ? "var(--status-on-track)" : "var(--status-over)";
                   const categoryKind: Kind = isIncome ? "income" : "expense";
+                  const matchedCardBill = getCardBillBadgeState(
+                    txn.eventRole,
+                    txn.kind,
+                    txn.matchedCardNumber,
+                  )?.matched;
                   const categoryName = txn.categoryName
                     ? translateCategoryName(txn.categoryName, tCat)
-                    : t("rowUncategorized");
+                    : matchedCardBill
+                      ? t("categoryCardTransfer")
+                      : t("rowUncategorized");
                   return (
                     <TableRow
                       key={txn.id}

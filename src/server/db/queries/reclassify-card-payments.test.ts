@@ -53,10 +53,15 @@ mock.module("drizzle-orm", () => ({
 mock.module("@/server/lib/transfers", () => ({
   matchCardPaymentIssuer: (description: string) =>
     description.includes("כ.א.ל") ? { issuer: "cal" } : null,
+  detectKind: (description: string, provider: string) =>
+    provider === "leumi" && (description.includes("כ.א.ל") || description.includes("מאסטרקרד"))
+      ? "transfer"
+      : "expense",
 }));
 
 const capturedCategoryUpdates: Array<{ id: number; categoryId: number }> = [];
 const capturedCandidateIds: number[][] = [];
+const capturedCandidateKinds: Array<Array<{ id: number; kind: string }>> = [];
 
 mock.module("@/server/db/queries/transactions", () => ({
   getMatchCandidates: () => [
@@ -73,6 +78,13 @@ mock.module("@/server/db/queries/transactions", () => ({
       kind: "expense",
       processedDate: "2024-01-15",
     },
+    {
+      id: 88,
+      provider: "leumi",
+      description: "לאומי מאסטרקרד",
+      kind: "expense",
+      chargedAmount: -2662.49,
+    },
   ],
   batchUpdateCategories: (_workspaceId: number, updates: { id: number; categoryId: number }[]) => {
     for (const u of updates) capturedCategoryUpdates.push(u);
@@ -88,11 +100,12 @@ const connectedIssuersSeen: ReadonlySet<CardIssuer>[] = [];
 
 mock.module("@/server/lib/matching", () => ({
   proposeEvents: (
-    candidates: Array<{ id: number }>,
+    candidates: Array<{ id: number; kind: string }>,
     _settings: unknown,
     options: { connectedCardIssuers: ReadonlySet<CardIssuer> },
   ) => {
     capturedCandidateIds.push(candidates.map((c) => c.id));
+    capturedCandidateKinds.push(candidates.map((c) => ({ id: c.id, kind: c.kind })));
     connectedIssuersSeen.push(options.connectedCardIssuers);
     if (options.connectedCardIssuers.has("cal" as CardIssuer)) return [];
     return [
@@ -131,5 +144,14 @@ describe("reclassifyCardPayments", () => {
 
     expect(capturedCandidateIds[0]).toContain(77);
     expect(capturedCandidateIds[0]).toContain(42);
+  });
+
+  test("re-detects kind so a stale expense matching a card pattern becomes a transfer candidate", () => {
+    capturedCandidateKinds.length = 0;
+
+    reclassifyCardPayments(fakeWorkspaceId, new Set<CardIssuer>());
+
+    const stale = capturedCandidateKinds[0]?.find((c) => c.id === 88);
+    expect(stale?.kind).toBe("transfer");
   });
 });

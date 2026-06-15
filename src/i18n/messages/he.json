@@ -219,6 +219,7 @@
     "eventCardMatchedTooltip": "חשבונית זו מכוסה על ידי כרטיס {card} — הרכישות הפרטניות כבר נספרות כהוצאה",
     "eventCardUnmatched": "ללא התאמה",
     "eventCardUnmatchedTooltip": "לא ניתן לשייך חשבונית זו לכרטיס מחובר — נספרת כהוצאה",
+    "categoryCardTransfer": "העברה (אשראי)",
     "markAsIncome": "סמן כהכנסה",
     "markAsExpense": "סמן כהוצאה",
     "markAsTransfer": "סמן כהעברה",

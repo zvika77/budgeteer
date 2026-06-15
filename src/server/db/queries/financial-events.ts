@@ -14,7 +14,7 @@ import {
 } from "@/server/db/schema";
 import type { MatchSettingsMap, ProposedEvent } from "@/server/lib/matching";
 import { proposeEvents } from "@/server/lib/matching";
-import type { CardIssuer } from "@/server/lib/transfers";
+import { type CardIssuer, detectKind } from "@/server/lib/transfers";
 
 const EVENT_TYPES: EventType[] = [
   "internal_transfer",
@@ -327,7 +327,10 @@ export function reclassifyCardPayments(
     }
   });
 
-  const candidates = getMatchCandidates(workspaceId, ALL_TIME);
+  const candidates = getMatchCandidates(workspaceId, ALL_TIME).map((c) => ({
+    ...c,
+    kind: detectKind(c.description, c.provider, c.chargedAmount),
+  }));
   const settings = getMatchSettingsMap(workspaceId);
   const proposals = proposeEvents(candidates, settings, {
     treatAtmAsTransfers: false,

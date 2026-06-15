@@ -219,6 +219,7 @@
     "eventCardMatchedTooltip": "This bill is covered by card {card} — individual purchases are already counted as spending",
     "eventCardUnmatched": "No match",
     "eventCardUnmatchedTooltip": "Could not match this bill to a connected card — counting as spending",
+    "categoryCardTransfer": "Transfer (Credit)",
     "markAsIncome": "Mark as income",
     "markAsExpense": "Mark as expense",
     "markAsTransfer": "Mark as transfer",
