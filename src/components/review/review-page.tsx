@@ -39,6 +39,7 @@ import {
   setTransactionKind,
   updateTransactionCategory,
 } from "@/lib/api";
+import { getCardBillBadgeState } from "@/lib/card-bill-badge";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 import { translateCategoryName, translateProviderName } from "@/lib/i18n-data";
 import { BANK_PROVIDERS, type Category, type TransactionWithCategory } from "@/lib/types";
@@ -472,6 +473,7 @@ function ReviewRow({
   categories: Category[];
   invalidate: () => void;
 }) {
+  const tTxn = useTranslations("transactions");
   const bucket = bucketOf(txn);
   const kind = txn.kind === "income" ? "income" : "expense";
   const { busy, accept, keepTransfer, exclude, categorize } = useReviewActions(txn, invalidate);
@@ -495,6 +497,44 @@ function ReviewRow({
             <span className="tabular-nums">{formatDate(txn.date)}</span>
             <span aria-hidden>·</span>
             <SourceMeta txn={txn} />
+            {(() => {
+              const billBadge = getCardBillBadgeState(
+                txn.eventRole,
+                txn.kind,
+                txn.matchedCardNumber,
+              );
+              if (billBadge === null) return null;
+              return (
+                <>
+                  <span aria-hidden>·</span>
+                  {billBadge.matched ? (
+                    <span
+                      className="inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 font-medium"
+                      style={{
+                        backgroundColor:
+                          "color-mix(in oklch, var(--status-on-track) 18%, transparent)",
+                        color: "var(--status-on-track)",
+                      }}
+                      title={tTxn("eventCardMatchedTooltip", { card: billBadge.cardNumber })}
+                    >
+                      {tTxn("eventCardMatched", { card: billBadge.cardNumber })}
+                    </span>
+                  ) : (
+                    <span
+                      className="inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 font-medium"
+                      style={{
+                        backgroundColor:
+                          "color-mix(in oklch, var(--status-heads-up) 18%, transparent)",
+                        color: "var(--status-heads-up)",
+                      }}
+                      title={tTxn("eventCardUnmatchedTooltip")}
+                    >
+                      {tTxn("eventCardUnmatched")}
+                    </span>
+                  )}
+                </>
+              );
+            })()}
           </div>
           {bucket === "flagged" && (
             <div className="mt-1.5">

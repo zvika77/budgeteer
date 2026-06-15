@@ -10,6 +10,7 @@ import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
 import { getAccountDisplayLabel } from "@/lib/account-label";
 import { getReviewTransactions } from "@/lib/api";
+import { getCardBillBadgeState } from "@/lib/card-bill-badge";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 import { translateCategoryName, translateProviderName } from "@/lib/i18n-data";
 import { BANK_PROVIDERS, type TransactionWithCategory } from "@/lib/types";
@@ -71,6 +72,7 @@ function FlaggedRow({ txn }: { txn: TransactionWithCategory }) {
   const t = useTranslations("home");
   const tCat = useTranslations("categoriesSeeded");
   const tBanks = useTranslations("banks");
+  const tTxn = useTranslations("transactions");
   const locale = useLocale() as Locale;
   const info = BANK_PROVIDERS.find((b) => b.id === txn.provider);
   const providerName = translateProviderName(txn.provider, info?.name ?? txn.provider, tBanks);
@@ -118,6 +120,37 @@ function FlaggedRow({ txn }: { txn: TransactionWithCategory }) {
                 ? t("flaggedConfidence", { score: txn.aiConfidence })
                 : t("flaggedUnsure")}
             </span>
+            {(() => {
+              const billBadge = getCardBillBadgeState(
+                txn.eventRole,
+                txn.kind,
+                txn.matchedCardNumber,
+              );
+              if (billBadge === null) return null;
+              return billBadge.matched ? (
+                <span
+                  className="inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 font-medium"
+                  style={{
+                    backgroundColor: "color-mix(in oklch, var(--status-on-track) 18%, transparent)",
+                    color: "var(--status-on-track)",
+                  }}
+                  title={tTxn("eventCardMatchedTooltip", { card: billBadge.cardNumber })}
+                >
+                  {tTxn("eventCardMatched", { card: billBadge.cardNumber })}
+                </span>
+              ) : (
+                <span
+                  className="inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 font-medium"
+                  style={{
+                    backgroundColor: "color-mix(in oklch, var(--status-heads-up) 18%, transparent)",
+                    color: "var(--status-heads-up)",
+                  }}
+                  title={tTxn("eventCardUnmatchedTooltip")}
+                >
+                  {tTxn("eventCardUnmatched")}
+                </span>
+              );
+            })()}
           </div>
         </div>
         <span className="hidden shrink-0 sm:block" title={sourceLabel}>
