@@ -95,8 +95,8 @@ export function GlobalAccountFilter() {
   const toggleGroup = (event: React.MouseEvent, group: AccountGroup) => {
     event.preventDefault();
     const memberTokens = group.members.map((m) => accountSelectionValue(m.id));
-    const allSelected = group.members.every((m) => selectedIds.has(m.id));
     const current = getAccountTokensSync();
+    const allSelected = group.members.every((m) => current.includes(accountSelectionValue(m.id)));
     const next = allSelected
       ? current.filter((tok) => !memberTokens.includes(tok))
       : [...new Set([...current, ...memberTokens])];
@@ -159,6 +159,7 @@ export function GlobalAccountFilter() {
                     <DropdownMenuItem
                       key={accountSelectionValue(account.id)}
                       onClick={(e) => toggleAccount(e, account.id)}
+                      closeOnClick={false}
                       className="gap-2"
                     >
                       {info ? (
@@ -188,8 +189,12 @@ export function GlobalAccountFilter() {
                   ) : null;
 
                 return (
-                  <Fragment key={`${group.credentialId}:${group.groupKey}`}>
-                    <DropdownMenuItem onClick={(e) => toggleGroup(e, group)} className="gap-2">
+                  <Fragment key={`${group.credentialId}::${group.groupKey}`}>
+                    <DropdownMenuItem
+                      onClick={(e) => toggleGroup(e, group)}
+                      closeOnClick={false}
+                      className="gap-2"
+                    >
                       {info ? (
                         <ProviderBadge
                           color={info.color}
@@ -210,6 +215,7 @@ export function GlobalAccountFilter() {
                         <DropdownMenuItem
                           key={accountSelectionValue(account.id)}
                           onClick={(e) => toggleAccount(e, account.id)}
+                          closeOnClick={false}
                           className="gap-2 ps-9"
                         >
                           <CreditCard className="size-3.5 shrink-0 opacity-60" />
