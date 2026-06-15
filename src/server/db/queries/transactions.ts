@@ -232,7 +232,7 @@ const TRANSACTION_LIST_FROM = `
     AND ba.credential_id = t.credential_id
     AND ba.account_number = t.account_number
   LEFT JOIN (
-    SELECT em.workspace_id, em.event_id, tp.account_number AS matched_card_number
+    SELECT em.workspace_id, em.event_id, MIN(tp.account_number) AS matched_card_number
     FROM event_members em
     JOIN transactions tp ON tp.id = em.transaction_id
     WHERE em.role = 'purchase'
