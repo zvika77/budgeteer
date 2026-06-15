@@ -150,7 +150,7 @@ export function getRecentTransactionsForHome(
   const acct = buildAccountFilterClause(filter, "t.");
   const rows = getDb()
     .prepare(
-      `SELECT t.id, t.date, t.description, t.charged_amount as chargedAmount,
+      `SELECT t.id, t.date, t.local_date as localDate, t.description, t.charged_amount as chargedAmount,
               t.charged_currency as chargedCurrency, t.kind, t.provider,
               c.name as categoryName, c.color as categoryColor,
               bc.label as accountLabel, ba.name as accountName

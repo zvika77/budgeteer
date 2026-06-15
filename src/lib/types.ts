@@ -240,6 +240,7 @@ export interface HomeHistoricalTrendPoint {
 export interface HomeRecentTransaction {
   id: number;
   date: string;
+  localDate: string;
   description: string;
   chargedAmount: number;
   chargedCurrency: string | null;

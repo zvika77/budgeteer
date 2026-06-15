@@ -407,7 +407,7 @@ export function TransactionsTable({
                         </div>
                       </TableCell>
                       <TableCell className="text-sm tabular-nums text-muted-foreground">
-                        {formatDate(txn.date)}
+                        {formatDate(txn.localDate)}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">

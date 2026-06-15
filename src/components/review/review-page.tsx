@@ -494,7 +494,7 @@ function ReviewRow({
             <div className="mt-0.5 truncate text-xs text-muted-foreground/80">{txn.memo}</div>
           )}
           <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-            <span className="tabular-nums">{formatDate(txn.date)}</span>
+            <span className="tabular-nums">{formatDate(txn.localDate)}</span>
             <span aria-hidden>·</span>
             <SourceMeta txn={txn} />
             {(() => {
@@ -776,7 +776,7 @@ function FocusCard({
             <div className="mt-0.5 truncate text-sm text-muted-foreground/80">{txn.memo}</div>
           )}
           <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-            <span className="tabular-nums">{formatDate(txn.date)}</span>
+            <span className="tabular-nums">{formatDate(txn.localDate)}</span>
             <span aria-hidden>·</span>
             <SourceMeta txn={txn} />
           </div>

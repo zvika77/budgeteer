@@ -362,7 +362,7 @@ function DetailContent({ data }: { data: CategoryDetail }) {
                     <div className="min-w-0 flex-1">
                       <div className="break-words text-sm font-medium">{txn.description}</div>
                       <div className="text-xs text-muted-foreground tabular-nums">
-                        {formatDate(txn.date)}
+                        {formatDate(txn.localDate)}
                       </div>
                     </div>
                     <DropdownMenu>
@@ -507,7 +507,7 @@ function NeedsReviewSection({
             <div className="min-w-0 flex-1">
               <div className="break-words text-sm font-medium">{txn.description}</div>
               <div className="text-xs text-muted-foreground tabular-nums">
-                {formatDate(txn.date)} ·{" "}
+                {formatDate(txn.localDate)} ·{" "}
                 {formatCurrency(txn.chargedAmount, txn.chargedCurrency ?? "ILS", locale)}
               </div>
             </div>
