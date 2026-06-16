@@ -232,7 +232,12 @@
     "includeToast": "Included in totals",
     "paginationRange": "{from} to {to} of {total}",
     "previous": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "dateBasisPurchase": "Purchase date",
+    "dateBasisBilling": "Billing date",
+    "dateBasisCaptionPurchase": "Credit-card spending is counted on its purchase date.",
+    "dateBasisCaptionBilling": "Credit-card spending is counted on its bank billing date.",
+    "dateBasisAriaLabel": "Date basis"
   },
   "dashboard": {
     "syncing": "Syncing…",
@@ -1236,6 +1241,11 @@
         "rowStates": {
           "title": "Row states",
           "body": "'Needs review' marks an uncertain category waiting for you; 'excluded' rows are deliberately kept out of every total; a card-match badge marks a bill linked to its purchases."
+        },
+        "dateBasis": {
+          "title": "Purchase vs billing date",
+          "body": "By default every transaction is counted on its purchase date, so a card purchase made in May is a May expense. Your bank counts it on the billing date instead, when the card bill is paid, which can be a month later. Use the Purchase / Billing toggle to switch this list to the bank's view when you are reconciling against a statement. Only the Transactions list changes; Home, Insights, and Budget always use purchase date.",
+          "example": "A ₪410 electricity charge bought on May 3 is billed by the card company on June 14. In Purchase mode it appears under May; switch to Billing and it moves to June, matching your bank statement."
         }
       }
     },

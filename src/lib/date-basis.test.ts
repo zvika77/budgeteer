@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { dateBasisColumn, DEFAULT_DATE_BASIS, isDateBasis } from "@/lib/date-basis";
+import { DEFAULT_DATE_BASIS, dateBasisColumn, isDateBasis } from "@/lib/date-basis";
 
 describe("date-basis helpers", () => {
   test("default basis is purchase", () => {

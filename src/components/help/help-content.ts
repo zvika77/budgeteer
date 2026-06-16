@@ -33,6 +33,7 @@ export const HELP_SECTIONS: Record<HelpPageKey, HelpSection[]> = {
     { id: "period", icon: "CalendarRange" },
     { id: "cardMatch", icon: "CreditCard" },
     { id: "rowStates", icon: "Tags" },
+    { id: "dateBasis", icon: "CalendarRange" },
   ],
   review: [
     { id: "whyFlagged", icon: "AlertTriangle" },

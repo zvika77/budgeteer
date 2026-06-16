@@ -49,6 +49,7 @@ import {
   updateTransactionCategory,
 } from "@/lib/api";
 import { getCardBillBadgeState } from "@/lib/card-bill-badge";
+import { useDateBasis } from "@/lib/date-basis-store";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 import { translateCategoryName } from "@/lib/i18n-data";
 import {
@@ -103,6 +104,7 @@ export function TransactionsTable({
   const tCat = useTranslations("categoriesSeeded");
   const locale = useLocale() as Locale;
   const queryClient = useQueryClient();
+  const dateBasis = useDateBasis();
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
@@ -407,7 +409,11 @@ export function TransactionsTable({
                         </div>
                       </TableCell>
                       <TableCell className="text-sm tabular-nums text-muted-foreground">
-                        {formatDate(txn.localDate)}
+                        {formatDate(
+                          dateBasis === "billing"
+                            ? (txn.billingLocalDate ?? txn.localDate)
+                            : txn.localDate,
+                        )}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">

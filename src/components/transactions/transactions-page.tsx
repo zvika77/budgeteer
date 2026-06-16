@@ -8,6 +8,7 @@ import { PeriodSelector } from "@/components/dashboard/period-selector";
 import { TransactionsTable } from "@/components/dashboard/transactions-table";
 import { HelpButton } from "@/components/help/help-button";
 import { PageHeader } from "@/components/layout/app-shell";
+import { DateBasisToggle } from "@/components/transactions/date-basis-toggle";
 import { QueryError } from "@/components/ui/query-error";
 import type { Locale } from "@/i18n/routing";
 import type { TransactionKindFilter } from "@/lib/api";
@@ -118,6 +119,8 @@ export function TransactionsPage() {
             );
           })}
         </div>
+
+        <DateBasisToggle />
 
         {transactionsQuery.isError && !transactionsQuery.data ? (
           <QueryError onRetry={() => transactionsQuery.refetch()} />
