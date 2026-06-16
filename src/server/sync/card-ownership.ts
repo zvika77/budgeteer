@@ -50,7 +50,5 @@ export function classifyScrapedCards(
 }
 
 export function hasCardDataChange(results: readonly SyncCountResult[]): boolean {
-  return results.some(
-    (r) => r.ok && isCardIssuerProvider(r.provider) && r.added + r.updated > 0,
-  );
+  return results.some((r) => r.ok && isCardIssuerProvider(r.provider) && r.added + r.updated > 0);
 }

@@ -57,29 +57,19 @@ describe("classifyScrapedCards", () => {
 
 describe("hasCardDataChange", () => {
   test("true when a card issuer added rows", () => {
-    expect(
-      hasCardDataChange([{ ok: true, provider: "cal", added: 3, updated: 0 }]),
-    ).toBe(true);
+    expect(hasCardDataChange([{ ok: true, provider: "cal", added: 3, updated: 0 }])).toBe(true);
   });
 
   test("true when a card issuer only updated rows", () => {
-    expect(
-      hasCardDataChange([{ ok: true, provider: "cal", added: 0, updated: 2 }]),
-    ).toBe(true);
+    expect(hasCardDataChange([{ ok: true, provider: "cal", added: 0, updated: 2 }])).toBe(true);
   });
 
   test("false for a bank provider", () => {
-    expect(
-      hasCardDataChange([{ ok: true, provider: "leumi", added: 9, updated: 9 }]),
-    ).toBe(false);
+    expect(hasCardDataChange([{ ok: true, provider: "leumi", added: 9, updated: 9 }])).toBe(false);
   });
 
   test("false when the card sync failed or had no changes", () => {
-    expect(
-      hasCardDataChange([{ ok: false, provider: "cal", added: 5, updated: 5 }]),
-    ).toBe(false);
-    expect(
-      hasCardDataChange([{ ok: true, provider: "cal", added: 0, updated: 0 }]),
-    ).toBe(false);
+    expect(hasCardDataChange([{ ok: false, provider: "cal", added: 5, updated: 5 }])).toBe(false);
+    expect(hasCardDataChange([{ ok: true, provider: "cal", added: 0, updated: 0 }])).toBe(false);
   });
 });
