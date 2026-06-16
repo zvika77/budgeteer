@@ -3,7 +3,7 @@ import "server-only";
 import { BANK_PROVIDERS, type BankProvider, type SyncKind } from "@/lib/types";
 import { createAIProvider } from "@/server/ai/factory";
 import { ensureOllamaRunning } from "@/server/ai/ollama-manager";
-import { upsertBankAccount } from "@/server/db/queries/bank-accounts";
+import { getCardOwners, upsertBankAccount } from "@/server/db/queries/bank-accounts";
 import {
   type BankCredentialMeta,
   getBankCredentials,
@@ -37,6 +37,7 @@ import { scrapeBank } from "@/server/scrapers";
 import { scrapeOneZeroFirstTime, scrapeOneZeroWithToken } from "@/server/scrapers/one-zero";
 import type { ScrapeResult } from "@/server/scrapers/types";
 import { markSyncEnd, markSyncHeartbeat, markSyncStart } from "@/server/sync/activity";
+import { classifyScrapedCards } from "@/server/sync/card-ownership";
 import { runMatchingStep } from "@/server/sync/matching-step";
 import { cancelOtpRequest, registerOtpRequest } from "@/server/sync/otp-bridge";
 
@@ -51,6 +52,8 @@ export interface ProviderResult {
   updated: number;
   errorMessage?: string;
   syncRunId?: number;
+  sharedCards?: string[];
+  newCards?: string[];
 }
 
 export interface WorkspaceSummary {
@@ -238,15 +241,21 @@ async function syncOneCredential(
     })),
   );
 
+  const scrapedAccountNumbers = result.accounts.map((a) => a.accountNumber);
+  const priorOwners = getCardOwners(workspaceId, provider, scrapedAccountNumbers);
+  const classification = classifyScrapedCards(meta.id, scrapedAccountNumbers, priorOwners);
+
   const { added, updated } = insertTransactions(
     workspaceId,
     allTransactions,
     provider,
     meta.id,
     syncRunId,
+    classification.ownerByAccount,
   );
 
   for (const account of result.accounts) {
+    if (classification.ownerByAccount.get(account.accountNumber) !== meta.id) continue;
     upsertBankAccount(workspaceId, meta.id, account.accountNumber, {
       balance: account.balance,
       groupKey: account.groupKey,
@@ -265,6 +274,8 @@ async function syncOneCredential(
     added,
     updated,
     syncRunId,
+    sharedCards: classification.shared,
+    newCards: classification.newlyAdded,
   };
 }
 
