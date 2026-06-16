@@ -110,6 +110,7 @@ export const transactions = sqliteTable("transactions", {
   date: text().notNull(),
   processedDate: text("processed_date").notNull(),
   localDate: text("local_date"),
+  billingLocalDate: text("billing_local_date"),
   originalAmount: real("original_amount").notNull(),
   originalCurrency: text("original_currency").notNull(),
   chargedAmount: real("charged_amount").notNull(),

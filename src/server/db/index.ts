@@ -3,6 +3,7 @@ import "server-only";
 import fs from "node:fs";
 import path from "node:path";
 import Database from "better-sqlite3";
+import { backfillBillingLocalDate } from "@/server/db/backfill-billing-local-date";
 import { backfillLocalDate } from "@/server/db/backfill-local-date";
 import { runMigrations } from "@/server/db/migrate";
 import { getDataDir } from "@/server/lib/data-dir";
@@ -33,6 +34,7 @@ function createDatabase(): Database.Database {
   runMigrations(db);
 
   backfillLocalDate(db);
+  backfillBillingLocalDate(db);
 
   return db;
 }
