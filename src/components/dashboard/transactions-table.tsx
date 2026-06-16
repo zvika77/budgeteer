@@ -28,6 +28,9 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -43,9 +46,13 @@ import {
 import type { Locale } from "@/i18n/routing";
 import {
   approveTransactionCategory,
+  getCardBillMatching,
   getCategories,
+  linkCardBill,
+  rebuildCardMatching,
   setTransactionExcluded,
   setTransactionKind,
+  unlinkCardBill,
   updateTransactionCategory,
 } from "@/lib/api";
 import { getCardBillBadgeState } from "@/lib/card-bill-badge";
@@ -201,6 +208,28 @@ export function TransactionsTable({
     queryKey: ["categories", "expense"],
     queryFn: () => getCategories("expense"),
   });
+  const { data: matchingData } = useQuery({
+    queryKey: ["cardBillMatching"],
+    queryFn: getCardBillMatching,
+  });
+  const cards = matchingData?.cards ?? [];
+
+  const handleLinkCard = async (billId: number, accountNumber: string | null) => {
+    setUpdatingId(billId);
+    try {
+      if (accountNumber) await linkCardBill(billId, accountNumber);
+      else await unlinkCardBill(billId);
+      await rebuildCardMatching();
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["summary"] });
+      queryClient.invalidateQueries({ queryKey: ["cardBillMatching"] });
+      toast.success(accountNumber ? t("cardLinked") : t("cardUnlinked"));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : tc("saveFailed"));
+    } finally {
+      setUpdatingId(null);
+    }
+  };
 
   const categoriesForKind = (rowKind: Kind): Category[] => {
     if (rowKind === "income") return incomeCategoriesQuery.data ?? [];
@@ -609,6 +638,24 @@ export function TransactionsTable({
                                   {t("excludeMerchantAction")}
                                 </DropdownMenuItem>
                               </>
+                            )}
+                            {txn.eventRole === "bill_payment" && cards.length > 0 && (
+                              <DropdownMenuSub>
+                                <DropdownMenuSubTrigger>{t("linkToCard")}</DropdownMenuSubTrigger>
+                                <DropdownMenuSubContent>
+                                  <DropdownMenuItem onClick={() => handleLinkCard(txn.id, null)}>
+                                    {t("unlinkCard")}
+                                  </DropdownMenuItem>
+                                  {cards.map((c) => (
+                                    <DropdownMenuItem
+                                      key={c.accountNumber}
+                                      onClick={() => handleLinkCard(txn.id, c.accountNumber)}
+                                    >
+                                      {c.name ? `${c.name} (${c.accountNumber})` : c.accountNumber}
+                                    </DropdownMenuItem>
+                                  ))}
+                                </DropdownMenuSubContent>
+                              </DropdownMenuSub>
                             )}
                           </DropdownMenuContent>
                         </DropdownMenu>

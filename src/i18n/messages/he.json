@@ -237,7 +237,11 @@
     "dateBasisBilling": "תאריך חיוב",
     "dateBasisCaptionPurchase": "הוצאות אשראי נספרות לפי תאריך העסקה.",
     "dateBasisCaptionBilling": "הוצאות אשראי נספרות לפי תאריך החיוב בבנק.",
-    "dateBasisAriaLabel": "בסיס תאריך"
+    "dateBasisAriaLabel": "בסיס תאריך",
+    "linkToCard": "קשר לכרטיס",
+    "unlinkCard": "אוטומטי (בטל קישור)",
+    "cardLinked": "קושר לכרטיס",
+    "cardUnlinked": "הקישור לכרטיס בוטל"
   },
   "dashboard": {
     "syncing": "מסנכרן…",

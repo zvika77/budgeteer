@@ -237,7 +237,11 @@
     "dateBasisBilling": "Billing date",
     "dateBasisCaptionPurchase": "Credit-card spending is counted on its purchase date.",
     "dateBasisCaptionBilling": "Credit-card spending is counted on its bank billing date.",
-    "dateBasisAriaLabel": "Date basis"
+    "dateBasisAriaLabel": "Date basis",
+    "linkToCard": "Link to card",
+    "unlinkCard": "Auto (unlink)",
+    "cardLinked": "Linked to card",
+    "cardUnlinked": "Unlinked from card"
   },
   "dashboard": {
     "syncing": "Syncing…",
