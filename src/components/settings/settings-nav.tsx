@@ -1,6 +1,14 @@
 "use client";
 
-import { Landmark, Layers, Palette, ShieldAlert, SlidersHorizontal, Sparkles } from "lucide-react";
+import {
+  CreditCard,
+  Landmark,
+  Layers,
+  Palette,
+  ShieldAlert,
+  SlidersHorizontal,
+  Sparkles,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
@@ -24,6 +32,12 @@ const ITEMS: NavItem[] = [
     labelKey: "bank",
     Icon: Landmark,
     match: (p) => p.startsWith("/settings/bank"),
+  },
+  {
+    href: "/settings/matching",
+    labelKey: "matching",
+    Icon: CreditCard,
+    match: (p) => p.startsWith("/settings/matching"),
   },
   {
     href: "/settings/ai",
