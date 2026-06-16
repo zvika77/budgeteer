@@ -385,6 +385,8 @@ export async function syncWorkspace(
         added: result.added,
         updated: result.updated,
         errorMessage: result.errorMessage,
+        sharedCards: result.sharedCards ?? [],
+        newCards: result.newCards ?? [],
       });
     } catch (err) {
       const message =
