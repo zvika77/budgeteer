@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { EventRole, EventType, MatchSettings } from "@/lib/types";
+import type { EventRole, EventSource, EventType, MatchSettings } from "@/lib/types";
 import { findInternalTransferPairs } from "@/server/lib/internal-transfers";
 import {
   CARD_ISSUERS,
@@ -44,6 +44,7 @@ export interface ProposedEvent {
   reasons: string[];
   eventKey: string;
   needsReview: boolean;
+  source?: EventSource;
 }
 
 export type MatchSettingsMap = Partial<Record<EventType, MatchSettings>>;
@@ -140,7 +141,10 @@ export function selectNearestCycleGroup(
   let bestDistance = Number.POSITIVE_INFINITY;
   for (const group of groups) {
     const distance = Math.abs(group.billingDay - billDay);
-    if (distance < bestDistance || (distance === bestDistance && best && group.billingDay < best.billingDay)) {
+    if (
+      distance < bestDistance ||
+      (distance === bestDistance && best && group.billingDay < best.billingDay)
+    ) {
       best = group;
       bestDistance = distance;
     }
@@ -406,17 +410,23 @@ function buildCardBillingGroupsForAccount(
 export function buildManualStatementProposals(
   candidates: readonly MatchCandidate[],
   links: readonly ManualBillLink[],
+  alreadyUsedTransactionIds: ReadonlySet<number> = new Set(),
 ): ManualStatementResult {
   const byId = new Map(candidates.map((c) => [c.id, c]));
   const proposals: ProposedEvent[] = [];
   const warnings: string[] = [];
+  const used = new Set<number>(alreadyUsedTransactionIds);
 
   for (const link of links) {
     const bill = byId.get(link.billTransactionId);
     if (!bill) continue;
 
     const cardPurchases = candidates.filter(
-      (c) => c.accountNumber === link.accountNumber && c.id !== bill.id && c.kind !== "transfer",
+      (c) =>
+        c.accountNumber === link.accountNumber &&
+        c.id !== bill.id &&
+        c.kind !== "transfer" &&
+        !used.has(c.id),
     );
     const groups = buildCardBillingGroupsForAccount(cardPurchases, link.accountNumber);
     const group = selectNearestCycleGroup(bill.date, groups);
@@ -452,7 +462,10 @@ export function buildManualStatementProposals(
       reasons: [`Manually linked to card ${link.accountNumber}`],
       eventKey: eventKeyFor("credit_card_statement", [bill, ...purchases]),
       needsReview: false,
+      source: "user",
     });
+    used.add(bill.id);
+    for (const p of purchases) used.add(p.id);
   }
 
   return { proposals, warnings };

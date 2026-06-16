@@ -65,6 +65,7 @@ mock.module("@/server/lib/transfers", () => ({
 const capturedCategoryUpdates: Array<{ id: number; categoryId: number }> = [];
 const capturedCandidateIds: number[][] = [];
 const capturedCandidateKinds: Array<Array<{ id: number; kind: string }>> = [];
+const capturedManualBillIds: ReadonlySet<number>[] = [];
 
 mock.module("@/server/db/queries/transactions", () => ({
   getMatchCandidates: () => [
@@ -101,22 +102,24 @@ mock.module("@/server/db/queries/categories", () => ({
 
 const connectedIssuersSeen: ReadonlySet<CardIssuer>[] = [];
 
+mock.module("@/server/db/queries/manual-card-bill-links", () => ({
+  getManualCardBillLinks: () => [{ billTransactionId: 42, accountNumber: "5052" }],
+}));
+
 mock.module("@/server/lib/matching", () => ({
   proposeEvents: (
     candidates: Array<{ id: number; kind: string }>,
     _settings: unknown,
-    options: { connectedCardIssuers: ReadonlySet<CardIssuer> },
+    options: { connectedCardIssuers: ReadonlySet<CardIssuer>; manualBillIds?: ReadonlySet<number> },
   ) => {
     capturedCandidateIds.push(candidates.map((c) => c.id));
     capturedCandidateKinds.push(candidates.map((c) => ({ id: c.id, kind: c.kind })));
     connectedIssuersSeen.push(options.connectedCardIssuers);
+    capturedManualBillIds.push(options.manualBillIds ?? new Set<number>());
     if (options.connectedCardIssuers.has("cal" as CardIssuer)) return [];
-    return [
-      {
-        members: [{ transactionId: 42, role: "bill_payment", flipKindTo: "expense" }],
-      },
-    ];
+    return [{ members: [{ transactionId: 42, role: "bill_payment", flipKindTo: "expense" }] }];
   },
+  buildManualStatementProposals: () => ({ proposals: [], warnings: [] }),
 }));
 
 import { reclassifyCardPayments } from "@/server/db/queries/financial-events";
@@ -156,5 +159,11 @@ describe("reclassifyCardPayments", () => {
 
     const stale = capturedCandidateKinds[0]?.find((c) => c.id === 88);
     expect(stale?.kind).toBe("transfer");
+  });
+
+  test("reserves manually-linked bills from the heuristic", () => {
+    capturedManualBillIds.length = 0;
+    reclassifyCardPayments(fakeWorkspaceId, new Set<CardIssuer>());
+    expect(capturedManualBillIds[0]?.has(42)).toBe(true);
   });
 });

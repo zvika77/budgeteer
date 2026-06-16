@@ -4,6 +4,7 @@ import { and, asc, desc, eq, inArray, ne, sql } from "drizzle-orm";
 import type { EventType, FinancialEventWithMembers, MatchSettings } from "@/lib/types";
 import { getOrm } from "@/server/db/orm";
 import { getCategoryByName } from "@/server/db/queries/categories";
+import { getManualCardBillLinks } from "@/server/db/queries/manual-card-bill-links";
 import { batchUpdateCategories, getMatchCandidates } from "@/server/db/queries/transactions";
 import {
   bankCredentials,
@@ -13,7 +14,7 @@ import {
   transactions,
 } from "@/server/db/schema";
 import type { MatchSettingsMap, ProposedEvent } from "@/server/lib/matching";
-import { proposeEvents } from "@/server/lib/matching";
+import { buildManualStatementProposals, proposeEvents } from "@/server/lib/matching";
 import { CARD_ISSUERS, type CardIssuer, detectKind } from "@/server/lib/transfers";
 
 const EVENT_TYPES: EventType[] = [
@@ -97,7 +98,7 @@ export function applyProposedEvents(
           eventType: p.eventType,
           canonicalTransactionId: p.canonicalTransactionId,
           status: p.needsReview ? "suggested" : "confirmed",
-          source: "heuristic",
+          source: p.source ?? "heuristic",
           confidence: p.confidence,
           reasons: JSON.stringify(p.reasons),
           eventKey: p.eventKey,
@@ -280,7 +281,7 @@ const ALL_TIME = "0001-01-01";
 export function reclassifyCardPayments(
   workspaceId: number,
   connectedCardIssuers: ReadonlySet<CardIssuer>,
-): void {
+): { warnings: string[] } {
   getOrm().transaction((tx) => {
     const events = tx
       .select({ id: financialEvents.id })
@@ -385,16 +386,24 @@ export function reclassifyCardPayments(
     kind: detectKind(c.description, c.provider, c.chargedAmount),
   }));
   const settings = getMatchSettingsMap(workspaceId);
+  const links = getManualCardBillLinks(workspaceId);
+  const manualBillIds = new Set(links.map((l) => l.billTransactionId));
   const proposals = proposeEvents(candidates, settings, {
     treatAtmAsTransfers: false,
     connectedCardIssuers,
+    manualBillIds,
   });
   applyProposedEvents(workspaceId, proposals);
 
+  const heuristicUsed = new Set(proposals.flatMap((p) => p.members.map((m) => m.transactionId)));
+  const manual = buildManualStatementProposals(candidates, links, heuristicUsed);
+  applyProposedEvents(workspaceId, manual.proposals);
+
+  const allProposals = [...proposals, ...manual.proposals];
   const creditCardCategory = getCategoryByName(workspaceId, "Credit Card");
   if (creditCardCategory) {
     const flippedToExpense = candidates.flatMap((c) => {
-      const decided = proposals.find((p) => p.members.some((m) => m.transactionId === c.id));
+      const decided = allProposals.find((p) => p.members.some((m) => m.transactionId === c.id));
       const flipped = decided?.members.some(
         (m) => m.transactionId === c.id && m.flipKindTo === "expense",
       );
@@ -402,6 +411,8 @@ export function reclassifyCardPayments(
     });
     if (flippedToExpense.length > 0) batchUpdateCategories(workspaceId, flippedToExpense);
   }
+
+  return { warnings: manual.warnings };
 }
 
 export function rejectEvent(workspaceId: number, eventId: number): boolean {

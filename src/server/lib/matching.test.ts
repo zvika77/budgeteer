@@ -508,10 +508,7 @@ describe("selectNearestCycleGroup", () => {
 
   test("breaks ties by the earlier billing day for determinism", () => {
     const billDay = Math.floor(Date.parse("2026-05-09") / 86_400_000);
-    const chosen = selectNearestCycleGroup("2026-05-09", [
-      g(billDay + 2, 10),
-      g(billDay - 2, 20),
-    ]);
+    const chosen = selectNearestCycleGroup("2026-05-09", [g(billDay + 2, 10), g(billDay - 2, 20)]);
     expect(chosen?.billingDay).toBe(billDay - 2);
   });
 });
@@ -555,6 +552,7 @@ describe("buildManualStatementProposals", () => {
     expect(warnings).toEqual([]);
     expect(proposals).toHaveLength(1);
     expect(proposals[0].eventType).toBe("credit_card_statement");
+    expect(proposals[0].source).toBe("user");
     const bill = proposals[0].members.find((m) => m.role === "bill_payment");
     expect(bill?.transactionId).toBe(100);
     expect(bill?.flipKindTo).toBe("transfer");
@@ -565,19 +563,34 @@ describe("buildManualStatementProposals", () => {
     expect(purchaseIds).toEqual([1, 2]);
   });
 
+  test("does not reuse purchases already claimed elsewhere", () => {
+    const candidates = [billCand({}), purchaseCand(1, -347.89), purchaseCand(2, -50)];
+    const { proposals } = buildManualStatementProposals(
+      candidates,
+      [{ billTransactionId: 100, accountNumber: "5052" }],
+      new Set([1]),
+    );
+    const purchaseIds = proposals[0].members
+      .filter((m) => m.role === "purchase")
+      .map((m) => m.transactionId);
+    expect(purchaseIds).toEqual([2]);
+  });
+
   test("warns and produces no proposal when the card has no purchases", () => {
-    const { proposals, warnings } = buildManualStatementProposals([billCand({})], [
-      { billTransactionId: 100, accountNumber: "5052" },
-    ]);
+    const { proposals, warnings } = buildManualStatementProposals(
+      [billCand({})],
+      [{ billTransactionId: 100, accountNumber: "5052" }],
+    );
     expect(proposals).toHaveLength(0);
     expect(warnings).toHaveLength(1);
     expect(warnings[0]).toContain("5052");
   });
 
   test("ignores an override whose bill transaction is not in the candidate set", () => {
-    const { proposals, warnings } = buildManualStatementProposals([purchaseCand(1, -10)], [
-      { billTransactionId: 999, accountNumber: "5052" },
-    ]);
+    const { proposals, warnings } = buildManualStatementProposals(
+      [purchaseCand(1, -10)],
+      [{ billTransactionId: 999, accountNumber: "5052" }],
+    );
     expect(proposals).toHaveLength(0);
     expect(warnings).toHaveLength(0);
   });
@@ -597,13 +610,11 @@ describe("buildManualStatementProposals", () => {
       dedupHash: `h${id}`,
       dedupSequence: 0,
     });
-    const jun = (id: number): MatchCandidate => ({ ...may(id), processedDate: "2026-06-09T00:00:00.000Z" });
-    const candidates = [
-      billCand({ id: 100, date: "2026-05-10" }),
-      may(1),
-      may(2),
-      jun(3),
-    ];
+    const jun = (id: number): MatchCandidate => ({
+      ...may(id),
+      processedDate: "2026-06-09T00:00:00.000Z",
+    });
+    const candidates = [billCand({ id: 100, date: "2026-05-10" }), may(1), may(2), jun(3)];
     const { proposals } = buildManualStatementProposals(candidates, [
       { billTransactionId: 100, accountNumber: "5052" },
     ]);
