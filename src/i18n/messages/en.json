@@ -237,7 +237,11 @@
     "dateBasisBilling": "Billing date",
     "dateBasisCaptionPurchase": "Credit-card spending is counted on its purchase date.",
     "dateBasisCaptionBilling": "Credit-card spending is counted on its bank billing date.",
-    "dateBasisAriaLabel": "Date basis"
+    "dateBasisAriaLabel": "Date basis",
+    "linkToCard": "Link to card",
+    "unlinkCard": "Auto (unlink)",
+    "cardLinked": "Linked to card",
+    "cardUnlinked": "Unlinked from card"
   },
   "dashboard": {
     "syncing": "Syncing…",
@@ -329,6 +333,7 @@
       "general": "General",
       "appearance": "Appearance",
       "bank": "Bank accounts",
+      "matching": "Card matching",
       "ai": "AI provider",
       "categories": "Categories",
       "data": "Data & privacy"
@@ -465,6 +470,22 @@
       "accountSaved": "Account updated.",
       "accountSaveFailed": "Couldn’t update the account. Please try again.",
       "noAccountsYet": "Accounts appear here after the first sync."
+    },
+    "matching": {
+      "title": "Card matching",
+      "description": "Link credit-card bills to the right card so spend is counted once.",
+      "rebuildTitle": "Rebuild card matching",
+      "rebuildDescription": "Re-checks every credit-card bill against your cards and applies your manual links. Run this if a bill shows the wrong total or after you change a link.",
+      "rebuildButton": "Rebuild now",
+      "rebuilding": "Rebuilding...",
+      "rebuildDone": "Card matching rebuilt",
+      "unmatchedTitle": "Unmatched bills",
+      "unmatchedDescription": "Pick the card each bill belongs to, then apply. The matched purchases are pulled in automatically.",
+      "auto": "Auto",
+      "applyButton": "Apply & rebuild",
+      "applying": "Applying...",
+      "noBills": "No unmatched bills. Everything is matched.",
+      "warning": "{count, plural, one {# bill could not be matched: its card has no purchases.} other {# bills could not be matched: their cards have no purchases.}}"
     },
     "ai": {
       "title": "AI & automation",
