@@ -772,6 +772,8 @@
     "aiSummaryOllamaFallback": "local",
     "aiSummaryGemini": "Gemini · {model}",
     "aiSummaryGeminiFallback": "stable",
+    "aiSummaryOpenRouter": "OpenRouter · {model}",
+    "aiSummaryOpenRouterFallback": "default model",
     "bankAccountLabel": "Account label",
     "bankAccountLabelPlaceholder": "e.g. Personal card, {name} (2)",
     "aiProviderGeminiTitle": "Gemini",

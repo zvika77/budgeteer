@@ -772,6 +772,8 @@
     "aiSummaryOllamaFallback": "מקומי",
     "aiSummaryGemini": "Gemini · {model}",
     "aiSummaryGeminiFallback": "יציב",
+    "aiSummaryOpenRouter": "OpenRouter · {model}",
+    "aiSummaryOpenRouterFallback": "מודל ברירת מחדל",
     "bankAccountLabel": "תווית החשבון",
     "bankAccountLabelPlaceholder": "לדוגמה: כרטיס אישי, {name} (2)",
     "aiProviderGeminiTitle": "Gemini",
