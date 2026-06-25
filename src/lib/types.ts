@@ -568,8 +568,9 @@ export interface AppSettings {
   currentBalance: number | null;
   balanceDate: string | null;
   monthsToSync: number;
-  aiProvider: "claude" | "gemini" | "ollama" | "none";
+  aiProvider: "claude" | "gemini" | "ollama" | "openrouter" | "none";
   geminiModel: string;
+  openRouterModel: string;
   ollamaUrl: string;
   ollamaModel: string;
   showBrowser: boolean;
@@ -683,6 +684,32 @@ export const RECOMMENDED_GEMINI_MODELS: GeminiModelInfo[] = [
   {
     name: "gemini-2.5-pro",
     description: "Stable higher-quality model for more complex categorization.",
+  },
+];
+
+export interface OpenRouterModelInfo {
+  name: string;
+  description: string;
+  recommended?: boolean;
+}
+
+export const RECOMMENDED_OPENROUTER_MODELS: OpenRouterModelInfo[] = [
+  {
+    name: "anthropic/claude-3.5-haiku",
+    description: "Fast, low-cost Claude. Best default for categorization.",
+    recommended: true,
+  },
+  {
+    name: "anthropic/claude-3.7-sonnet",
+    description: "Higher-quality Claude for more nuanced categorization.",
+  },
+  {
+    name: "openai/gpt-4o-mini",
+    description: "Cheap, capable non-Anthropic option.",
+  },
+  {
+    name: "google/gemini-2.0-flash-001",
+    description: "Fast, budget-friendly Google option.",
   },
 ];
 
