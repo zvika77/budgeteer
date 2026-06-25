@@ -259,7 +259,7 @@ Don't see your bank? Adding a scraper is a small wrapper around `israeli-bank-sc
 | Network | `api.anthropic.com` | Google Gemini API | `openrouter.ai` | `localhost:11434` | Offline |
 | Setup | API key | API key from Google AI Studio + choose a model | API key from openrouter.ai + choose or paste a model | Install Ollama + pull a model | Nothing |
 
-Default model when Claude is selected: `claude-haiku-4-5-20251001` (cheap, fast, accurate for categorization). Gemini defaults to `gemini-3.5-flash` and lets you choose from stable text models: `gemini-3.5-flash`, `gemini-3.1-flash-lite`, `gemini-2.5-flash`, `gemini-2.5-flash-lite`, and `gemini-2.5-pro`. OpenRouter defaults to `anthropic/claude-3.5-haiku` and lets you choose from `anthropic/claude-3.5-haiku`, `anthropic/claude-3.7-sonnet`, `openai/gpt-4o-mini`, `google/gemini-2.0-flash-001`, or paste any OpenRouter model id. For Ollama, `llama3.2:3b` is the recommended default.
+Default model when Claude is selected: `claude-haiku-4-5-20251001` (cheap, fast, accurate for categorization). Gemini defaults to `gemini-3.5-flash` and lets you choose from stable text models: `gemini-3.5-flash`, `gemini-3.1-flash-lite`, `gemini-2.5-flash`, `gemini-2.5-flash-lite`, and `gemini-2.5-pro`. OpenRouter defaults to `anthropic/claude-haiku-4.5` and lets you choose from `anthropic/claude-haiku-4.5`, `anthropic/claude-sonnet-4.6`, `openai/gpt-5-mini`, `google/gemini-3.5-flash`, or paste any OpenRouter model id. For Ollama, `llama3.2:3b` is the recommended default.
 
 You can change providers any time from **Settings → AI provider**. Existing categorizations are kept.
 

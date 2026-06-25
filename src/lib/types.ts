@@ -695,20 +695,20 @@ export interface OpenRouterModelInfo {
 
 export const RECOMMENDED_OPENROUTER_MODELS: OpenRouterModelInfo[] = [
   {
-    name: "anthropic/claude-3.5-haiku",
+    name: "anthropic/claude-haiku-4.5",
     description: "Fast, low-cost Claude. Best default for categorization.",
     recommended: true,
   },
   {
-    name: "anthropic/claude-3.7-sonnet",
+    name: "anthropic/claude-sonnet-4.6",
     description: "Higher-quality Claude for more nuanced categorization.",
   },
   {
-    name: "openai/gpt-4o-mini",
+    name: "openai/gpt-5-mini",
     description: "Cheap, capable non-Anthropic option.",
   },
   {
-    name: "google/gemini-2.0-flash-001",
+    name: "google/gemini-3.5-flash",
     description: "Fast, budget-friendly Google option.",
   },
 ];
